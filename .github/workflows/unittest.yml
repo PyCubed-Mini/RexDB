@@ -25,7 +25,7 @@ jobs:
           python-version: 3.8
 
       - name: Install dependencies
-        run: pip install -r state_machine/requirements.txt 
+        run: pip install -r requirements.txt 
       
       - name: Run Unit Tests
-        run: python3 -m unittest discover -v -s state_machine/unit_tests/ -p test*.py
+        run: python3 -m unittest discover -v -s tests/ -p test*.py
