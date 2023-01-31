@@ -7,7 +7,7 @@ class RexDB:
         self._fd = open(file, "wb")
         self._user_fstring = fstring
         self._dense_fstring = self.make_format()
-        self._line_size = struct.calcsize(fstring)
+        self._line_size = struct.calcsize(self._dense_fstring)
         self._cursor = cursor
         self._file = file
         self._lines = lines
@@ -18,7 +18,8 @@ class RexDB:
         if self._cursor >= self._lines:
             self._cursor = 0
             self._fd.seek(0, 0)
-        data = struct.pack(self._user_fstring, *data)
+        mapped_data = self.map_user_dense(data)
+        data = struct.pack(self._dense_fstring, *mapped_data)
         self._fd.write(data)
         self._cursor += 1
 
@@ -26,7 +27,7 @@ class RexDB:
         self._fd.flush()
         with open(self._file, "rb") as fd:
             fd.seek(0, n*self._line_size)
-            return struct.unpack(self._user_fstring, fd.read(self._line_size))
+            return self.map_dense_user(struct.unpack(self._dense_fstring, fd.read(self._line_size)))
 
     def col(self, i):
         self._fd.flush()
@@ -37,7 +38,7 @@ class RexDB:
                 print(line)
                 if len(line) != self._line_size:
                     break
-                line = struct.unpack(self._user_fstring, line)
+                line = self.map_dense_user(struct.unpack(self._dense_fstring, line))
                 data.append(line[i])
         return data[self._cursor:] + data[:self._cursor]
 
@@ -60,3 +61,38 @@ class RexDB:
         for c in formatString:
             result += c
         return result
+
+    '''
+    output needs to be in user_format with each numbered occurence of a type in
+    dense_format going to the same numbered occurence of that type in the
+    user_format. E.g. if user_format = "fcif" and dense_format = "fifc"
+                                (3.2, "a", 5, 9.8) => (3.2, 5, 9.8, a) '''
+
+    def map_dense_user(self, data):
+        user_format = [*self._user_fstring]
+        # input is in dense_format
+        input = [d for d in data]
+        result = [0] * len(data)
+        for i in range(len(input)):
+            data_type = self._dense_fstring[i]
+            for j in range(len(user_format)):
+                if user_format[j] == data_type:
+                    user_format[j] = -1
+                    result[j] = input[i]
+                    break
+        return tuple(result)
+
+    # maps data in user_format to dense_format
+    def map_user_dense(self, data):
+        dense_format = [*self._dense_fstring]
+        # input is in user_format
+        input = [d for d in data]
+        result = [0] * len(data)
+        for i in range(len(input)):
+            data_type = self._user_fstring[i]
+            for j in range(len(dense_format)):
+                if dense_format[j] == data_type:
+                    dense_format[j] = -1
+                    result[j] = input[i]
+                    break
+        return tuple(result)
