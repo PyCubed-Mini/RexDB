@@ -34,3 +34,8 @@ class TestExample(fake_filesystem_unittest.TestCase):
         db.log((1, 3))
 
         self.assertEqual(db.col(1), [1, 2, 3])
+
+    def test_make_format(self):
+        db = RexDB("test3.db", 'cff', lines=1)
+
+        self.assertEqual(db._fstring, "ffc")

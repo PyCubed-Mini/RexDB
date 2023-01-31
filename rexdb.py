@@ -6,6 +6,7 @@ class RexDB:
     def __init__(self, file, fstring, lines=100, cursor=0):
         self._fd = open(file, "wb")
         self._fstring = fstring
+        self._fstring = self.makeFormat()
         self._line_size = struct.calcsize(fstring)
         self._cursor = cursor
         self._file = file
@@ -39,3 +40,23 @@ class RexDB:
                 line = struct.unpack(self._fstring, line)
                 data.append(line[i])
         return data[self._cursor:] + data[:self._cursor]
+
+    # formats for space c: char, i: int32, f: float, ?: bool, h: int16
+    def makeFormat(self):
+        formatString = [*self._fstring]
+        charList = {"c": 1, "?": 1, "h": 2, "i": 4, "f": 4}
+
+        # basic insertion sort to order the characters based on Byte size
+        for i in range(1, len(formatString)):
+            key = charList[formatString[i]]
+            char = formatString[i]
+            j = i-1
+            while j >= 0 and key > charList[formatString[j]]:
+                formatString[j + 1] = formatString[j]
+                j -= 1
+            formatString[j + 1] = char
+
+        result = ""
+        for c in formatString:
+            result += c
+        return result
