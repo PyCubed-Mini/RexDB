@@ -1,5 +1,3 @@
-import os
-import unittest
 from pyfakefs import fake_filesystem_unittest
 
 from rexdb import RexDB
