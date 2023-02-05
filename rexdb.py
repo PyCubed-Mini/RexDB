@@ -1,6 +1,24 @@
 import struct
 
 
+class DensePacker():
+    def __init__(self, fstring: str) -> None:
+        self.make_format(fstring)
+
+        # formats for space c: char, i: int32, f: float, ?: bool, h: int16
+    def make_format(self, fstring: str) -> str:
+        charList = {"c": 1, "?": 0.1, "h": 2, "i": 4, "f": 4.1}
+        denseFormat = list(self._user_fstring)
+        denseFormat.sort(key=(lambda c: charList[c]), reverse=True)
+        return ''.join(denseFormat)
+
+    def pack(self, data: tuple) -> tuple:
+        pass
+
+    def unpack(self, data: tuple) -> tuple:
+        pass
+
+
 class RexDB:
 
     def __init__(self, file, fstring, lines=100, cursor=0):
@@ -42,33 +60,7 @@ class RexDB:
                 data.append(line[i])
         return data[self._cursor:] + data[:self._cursor]
 
-    # formats for space c: char, i: int32, f: float, ?: bool, h: int16
-    def make_format(self):
-        formatString = [*self._user_fstring]
-        charList = {"c": 1, "?": 1, "h": 2, "i": 4, "f": 4}
-
-        # basic insertion sort to order the characters based on Byte size
-        for i in range(1, len(formatString)):
-            key = charList[formatString[i]]
-            char = formatString[i]
-            j = i-1
-            while j >= 0 and key > charList[formatString[j]]:
-                formatString[j + 1] = formatString[j]
-                j -= 1
-            formatString[j + 1] = char
-
-        result = ""
-        for c in formatString:
-            result += c
-        return result
-
-    '''
-    output needs to be in user_format with each numbered occurence of a type in
-    dense_format going to the same numbered occurence of that type in the
-    user_format. E.g. if user_format = "fcif" and dense_format = "fifc"
-                                (3.2, "a", 5, 9.8) => (3.2, 5, 9.8, a) '''
-
-    def map_dense_user(self, data):
+    def map_dense_user(self, data: tuple) -> tuple:
         user_format = [*self._user_fstring]
         # input is in dense_format
         input = [d for d in data]
@@ -83,7 +75,7 @@ class RexDB:
         return tuple(result)
 
     # maps data in user_format to dense_format
-    def map_user_dense(self, data):
+    def map_user_dense(self, data: tuple) -> tuple:
         dense_format = [*self._dense_fstring]
         # input is in user_format
         input = [d for d in data]
