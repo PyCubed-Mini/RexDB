@@ -32,6 +32,7 @@ def read_header(file: str) -> Header:
     """
     with open(file, "rb") as f:
         version = unpack_one(UNSIGNED_CHAR, f.read(1))
+        assert(version == VERSION_BYTE)
         (start_date, end_date, fstring_len) = struct.unpack(
             f'<{UNSIGNED_LONG_LONG}{UNSIGNED_LONG_LONG}{UNSIGNED_CHAR}',
             f.read(8+8+1))
