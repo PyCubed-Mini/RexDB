@@ -10,11 +10,9 @@ class DensePacker():
 
     '''
     make_format: str -> str
-    
     orders the incoming format string based on the byte size of
-    the data type. 
-    icfc -> ficc
-    '''
+    the data type.
+    icfc -> ficc'''
 
     def make_format(self, fstring: str) -> str:
         char_list = {"c": 1, "?": 0.1, "h": 2, "i": 4, "f": 4.1}
@@ -24,13 +22,12 @@ class DensePacker():
 
     '''
     create_pack_map : str * str -> str * str
-
     Creates a map from the user_fstring to the dense_fstring.
     This maps the last occurence of the data type in user_fstring
     to the first occurence in dense_fstring.
     For Example icfc = [0, 1, 2, 3] -> ficc = [2, 0, 3, 1]
-        Notice how the "c" at index 3 comes before the "c" at 
-        index 1 
+        Notice how the "c" at index 3 comes before the "c" at
+        index 1
     '''
 
     def create_pack_maps(self, user_fstring, dense_fstring) -> str:
@@ -47,8 +44,7 @@ class DensePacker():
 
     '''
     pack: tuple -> tuple
-
-    takes input in the user_format and will output that data in the 
+    takes input in the user_format and will output that data in the
     dense_format
     '''
 
