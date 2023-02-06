@@ -14,6 +14,7 @@ class TestExample(fake_filesystem_unittest.TestCase):
         db.log((1024, b'a', 3.0, b'1'))
         self.assertEqual(db.nth(0), (1024, b'a', 3.0, b'1'))
         db.log((1023, b'b', 4.0, b'2'))
+        self.assertEqual(db.nth(1), (1023, b'b', 4.0, b'2'))
         db.log((1022, b'c', 5.0, b'3'))
 
         # wraping works
@@ -32,3 +33,14 @@ class TestExample(fake_filesystem_unittest.TestCase):
         db.log((1, 3))
 
         self.assertEqual(db.col(1), [1, 2, 3])
+
+    def test_less_basic(self):
+        db = RexDB("test3.db", 'dcichd?dci', lines=5)
+
+        line_one = (9.2, b'l', 1234, b'p', 1, 9.1, True, 1.1, b'm', 4321)
+        line_two = (9.1, b'p', 6534, b'p', 0, 1.9, True, 4.5, b'k', 12345)
+
+        db.log(line_one)
+        self.assertEqual(db.nth(0), line_one)
+        db.log(line_two)
+        self.assertEqual(db.nth(1), line_two)

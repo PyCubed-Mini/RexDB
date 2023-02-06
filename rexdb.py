@@ -7,6 +7,7 @@ class DensePacker():
         self.user_fstring = fstring
         self.dense_fstring = self.make_format(fstring)
         self.user_dense_map = self.create_pack_maps(self.user_fstring, self.dense_fstring)
+        self.line_size = struct.calcsize(self.dense_fstring)
 
     def make_format(self, fstring: str) -> str:
         '''
@@ -15,7 +16,7 @@ class DensePacker():
         the data type.
         icfc -> ficc
         '''
-        char_list = {"c": 1, "?": 0.1, "h": 2, "i": 4, "f": 4.1}
+        char_list = {"c": 1, "?": 0.1, "h": 2, "i": 4, "f": 4.1, "Q": 8, "d": 8.1}
         denseFormat = list(fstring)
         denseFormat.sort(key=(lambda c: char_list[c]), reverse=True)
         return ''.join(denseFormat)
@@ -30,7 +31,7 @@ class DensePacker():
             Notice how the "c" at index 3 comes before the "c" at
             index 1
         '''
-        pack_map = {"c": [], "?": [], "h": [], "i": [], "f": []}
+        pack_map = {"c": [], "?": [], "h": [], "i": [], "f": [], "Q": [], "d": []}
         length = len(user_fstring)
         # map from the user string to the dense string
         user_dense_map = [0] * length
@@ -41,23 +42,30 @@ class DensePacker():
 
         return user_dense_map
 
-    def pack(self, data: tuple) -> tuple:
+    def pack(self, data: tuple) -> bytes:
         '''
-        pack: tuple -> tuple
-        takes input in the user_format and will output that data in the
-        dense_format
+        pack: tuple -> bytes
+        takes input in the user_format, converts it to data in dense_format
+        and packs that data into bytes.
         '''
         result = [0] * self.fstring_length
         for i in range(self.fstring_length):
             index = self.user_dense_map[i]
             result[i] = data[index]
-        return tuple(result)
+        return struct.pack(self.dense_fstring, *result)
 
-    def unpack(self, data: tuple) -> tuple:
+    def unpack(self, data: bytes) -> tuple:
+        '''
+        unpack: bytes -> tuple
+        takes input in the form of bytes and will unpack the data into a tuple
+        that is in the user_format
+        '''
         result = [0] * self.fstring_length
+        unpacked_data = struct.unpack(self.dense_fstring, data)
+        print(unpacked_data)
         for i in range(self.fstring_length):
             index = self.user_dense_map[i]
-            result[index] = data[i]
+            result[index] = unpacked_data[i]
         return tuple(result)
 
 
@@ -65,69 +73,36 @@ class RexDB:
 
     def __init__(self, file, fstring, lines=100, cursor=0):
         self._fd = open(file, "wb")
-        self._user_fstring = fstring
-        packer = DensePacker(fstring)
-        self._dense_fstring = packer.dense_fstring
-        self._line_size = struct.calcsize(self._dense_fstring)
+        self.fstring = fstring
+        self.packer = DensePacker(fstring)
         self._cursor = cursor
         self._file = file
         self._lines = lines
 
-        self._fd.seek(0, self._line_size*self._cursor)
+        self._fd.seek(0, self.packer.line_size*self._cursor)
 
     def log(self, data):
         if self._cursor >= self._lines:
             self._cursor = 0
             self._fd.seek(0, 0)
-        mapped_data = self.map_user_dense(data)
-        data = struct.pack(self._dense_fstring, *mapped_data)
-        self._fd.write(data)
+        self._fd.write(self.packer.pack(data))
         self._cursor += 1
 
     def nth(self, n):
         self._fd.flush()
         with open(self._file, "rb") as fd:
-            fd.seek(0, n*self._line_size)
-            return self.map_dense_user(struct.unpack(self._dense_fstring, fd.read(self._line_size)))
+            fd.seek(n*self.packer.line_size)
+            return self.packer.unpack(fd.read(self.packer.line_size))
 
     def col(self, i):
         self._fd.flush()
         data = []
         with open(self._file, "rb") as fd:
             for _ in range(self._lines):
-                line = fd.read(self._line_size)
+                line = fd.read(self.packer.line_size)
                 print(line)
-                if len(line) != self._line_size:
+                if len(line) != self.packer.line_size:
                     break
-                line = self.map_dense_user(struct.unpack(self._dense_fstring, line))
+                line = self.packer.unpack(line)
                 data.append(line[i])
         return data[self._cursor:] + data[:self._cursor]
-
-    def map_dense_user(self, data: tuple) -> tuple:
-        user_format = [*self._user_fstring]
-        # input is in dense_format
-        input = [d for d in data]
-        result = [0] * len(data)
-        for i in range(len(input)):
-            data_type = self._dense_fstring[i]
-            for j in range(len(user_format)):
-                if user_format[j] == data_type:
-                    user_format[j] = -1
-                    result[j] = input[i]
-                    break
-        return tuple(result)
-
-    # maps data in user_format to dense_format
-    def map_user_dense(self, data: tuple) -> tuple:
-        dense_format = [*self._dense_fstring]
-        # input is in user_format
-        input = [d for d in data]
-        result = [0] * len(data)
-        for i in range(len(input)):
-            data_type = self._user_fstring[i]
-            for j in range(len(dense_format)):
-                if dense_format[j] == data_type:
-                    dense_format[j] = -1
-                    result[j] = input[i]
-                    break
-        return tuple(result)
