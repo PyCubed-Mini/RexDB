@@ -9,10 +9,10 @@ class DensePacketTest(fake_filesystem_unittest.TestCase):
 
     def testFormatter(self):
         db = RexDB("test3.db", 'icfc', lines=1)
-        self.assertEqual(db._dense_fstring, "ficc")
+        self.assertEqual(db.packer.dense_fstring, "ficc")
 
         db = RexDB("test3.db", "cifh?c", lines=1)
-        self.assertEqual(db._dense_fstring, "fihcc?")
+        self.assertEqual(db.packer.dense_fstring, "fihcc?")
 
     def testPacker(self):
         packer = DensePacker("icdc")
