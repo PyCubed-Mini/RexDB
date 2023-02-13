@@ -49,6 +49,8 @@ def header_to_bytes(header: Header) -> bytes:
 class DensePacker():
     def __init__(self, fstring: str) -> None:
         self.fstring_length = len(fstring)
+        if self.fstring_length <= 0:
+            raise ValueError("fstring must contain at least one data type")
         self.user_fstring = fstring
         self.dense_fstring = self.make_format(fstring)
         self.user_dense_map = self.create_pack_maps(self.user_fstring, self.dense_fstring)
@@ -63,7 +65,10 @@ class DensePacker():
         '''
         char_list = {"c": 1, "?": 0.1, "h": 2, "i": 4, "f": 4.1, "Q": 8, "d": 8.1}
         denseFormat = list(fstring)
-        denseFormat.sort(key=(lambda c: char_list[c]), reverse=True)
+        try:
+            denseFormat.sort(key=(lambda c: char_list[c]), reverse=True)
+        except KeyError as e:
+            raise ValueError(f"Invalid fstring contains unsupported data type: {e}")
         return ''.join(denseFormat)
 
     def create_pack_maps(self, user_fstring, dense_fstring) -> str:
