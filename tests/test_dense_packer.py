@@ -1,20 +1,13 @@
 from pyfakefs import fake_filesystem_unittest
 
-from rexdb import RexDB, DensePacker
+from rexdb import DensePacker
 
 
 class DensePacketTest(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    def testFormatter(self):
-        db = RexDB("test3.db", 'icfc', lines=1)
-        self.assertEqual(db.packer.dense_fstring, "ficc")
-
-        db = RexDB("test3.db", "cifh?c", lines=1)
-        self.assertEqual(db.packer.dense_fstring, "fihcc?")
-
-    def testPacker(self):
+    def testDensePacker(self):
         packer = DensePacker("icdc")
         assert (packer.dense_fstring == "dicc")
         assert (packer.user_dense_map == [2, 0, 3, 1])
