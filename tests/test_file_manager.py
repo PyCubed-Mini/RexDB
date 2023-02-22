@@ -14,7 +14,7 @@ class FileManagerTest(fake_filesystem_unittest.TestCase):
         assert (filemanager.lines_per_file == 1)
 
     def testFileWrite(self):
-        db = RexDB("Qcfc", 20, 2)
+        db = RexDB("Qcfc", ("big num", "first initial", "precise num", "last initial"), 20, 2)
 
         db.log((111111111, b'l', 9.8, b'p'))
         db.log((222222222, b'p', 8.7, b'p'))

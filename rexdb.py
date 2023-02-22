@@ -119,18 +119,21 @@ class DensePacker():
 
 
 class FileManager:
-    def __init__(self, fstring: str, timestamp: float, bytes_per_file: int = 1000, files_per_folder: int = 100) -> None:
+    def __init__(self, fstring: str, bytes_per_file: int = 1000, files_per_folder: int = 100) -> None:
         self.bytes_per_file = bytes_per_file
-        self.fstring = fstring
-        self.fstring_size = self.calc_fstring_size()
+        self.fstring = 'f' + fstring
+        self.fstring_size = 4 + self.calc_fstring_size()
         self.lines_per_file = (self.bytes_per_file // self.fstring_size) + 1
         self.files_per_folder = files_per_folder
-        self.header_size = 1 + 4 + 4 + 1 + len(fstring) * 1
         self.folders = 0
         self.files = 0
         self.version = 0
+        self.db_map = "map.db"
+        self.folder_map = ""
+        self.current_file = ""
+        self.create_db_map()
         self.create_new_folder()
-        self.create_new_file(timestamp)
+        self.create_new_file()
 
     def calc_fstring_size(self) -> int:
         '''
@@ -169,70 +172,108 @@ class FileManager:
         except Exception as e:
             print(f"failed to write header: {e}")
 
-    def write_file(self, bytes_data: bytes) -> None:
+    def write_file(self, bytes_data: bytes, time: float) -> bool:
         '''
-        write_file: bytes -> None
+        write_file: bytes -> bool
         Takes in data and writes it to the current file. Data should be formatted
         properly accoring to the fstring FileManager was given originally.
+        Returns True if data was written, returns false if there was an exception
         '''
         try:
             with open(self.current_file, "ab") as file:
                 file.write(bytes_data)
+                return True
         except Exception as e:
             print(f"failed to write to file: {e}")
+            return False
 
-        with open(self.current_file, "rb") as file:
-            print(len(file.read()))
-
-    def create_new_file(self, time) -> None:
+    def create_new_file(self) -> bool:
         '''
         create_new_file: header -> None
         takes in a header. Iterates file count and creates a file with that new 
         count as the name. Writes the header to the new file.
+        returns True if file successfully made and added to map otherwise return false
         '''
         self.files += 1
         self.current_file = f'{self.folders}xx/{(self.folders * 100) + self.files:03}.db'
         try:
-            self.write_header(time)
+            file = open(self.current_file, "rb")
+            return True
         except Exception as e:
             print(f"Failed to create new file: {e}")
+            return False
 
-    def create_new_folder(self) -> None:
+    def create_new_folder(self) -> bool:
         '''
         create_new_folder: None -> None
         Iterates the folder count and updates the current file with that new 
         folder value. Resets file count to 0.
+        returns True if folder made and added to the db map
         '''
         self.files = 0
         self.folders += 1
         try:
             os.mkdir(f'{self.folders}xx')
             self.current_file = f'{self.folders}xx/{self.folders + self.files:03}.db'
+            return True
         except Exception as e:
             print(f"Failed to create folder: {e}")
+            return False
+
+    def create_db_map(self):
+        '''
+        when db is created a map file will be created the contains start times of 
+        each folder and the format of the database.
+        '''
+        try:
+            with open(self.db_map, "wb+") as file:
+                file.write()
+
+    def create_folder_map(self):
+        '''
+        When a new folder is created, a map will be created 
+        '''
+        pass
+
+    def update_folder_map(self, time: float):
+        '''
+        adds timestamp of new file to the folder map
+        '''
+        pass
+
+    def update_db_map(self, time: float):
+        '''
+        when new folder is created, adds the timestamp to the database map
+        '''
+        pass
 
 
 class RexDB:
-    def __init__(self, fstring, bytes_per_file=1000, files_per_folder=50, cursor=0, time_method=time.localtime):
-        self._packer = DensePacker(fstring)
+    def __init__(self, fstring, field_names: tuple, bytes_per_file=1000, files_per_folder=50, cursor=0, time_method=time.localtime):
+        # add 'f' for time field
+        self._packer = DensePacker('f' + fstring)
+        self._field_names = ("timestamp") + field_names
         self._cursor = cursor
         self._timer_function = time_method
+        self._previouse_time = time.mktime(self._timer_function())
+        self._file_manager = FileManager(fstring, bytes_per_file, files_per_folder)
         self._timestamp = time.mktime(self._timer_function())
-        self._file_manager = FileManager(fstring, self._timestamp, bytes_per_file, files_per_folder)
 
     def log(self, data):
         self._timestamp = time.mktime(self._timer_function())
+        if (self._timestamp < self._previouse_time):
+            raise Exception("logging back in time error")
 
-        # if no more files can be written in a folder, make new folder
+        # if no more lines can be written in a file, make new file
         if self._cursor >= self._file_manager.lines_per_file:
+            # if no more files can be written to a folder make a new folder
             if self._file_manager.files >= self._file_manager.files_per_folder:
                 self._file_manager.create_new_folder()
-            self._file_manager.complete_header()
+                self._file_manager.create_folder_map(self._timestamp)
+                self._file_manager.update_db_map(self._timestamp)
+            self._file_manager.update_folder_map(self._timestamp)
             self._file_manager.create_new_file(self._timestamp)
             self._cursor = 0
-
-        # if no more data can be written to file, update header with an
-        # end date and create a new file.
 
         data_bytes = self._packer.pack(data)
         self._file_manager.write_file(data_bytes)
@@ -257,5 +298,10 @@ class RexDB:
                 data.append(line[i])
         return data[self._cursor:] + data[:self._cursor]
 
-    def get_data_at_time(time: time.struct_time):
+    def get_data_at_time(time: time.struct_time, fields: tuple):
+        '''
+        get_data_at_time: time.struct_time -> tuple
+        finds the correct row of data for a given time stamp and returns the fields
+        that the user queries for.
+        '''
         pass
