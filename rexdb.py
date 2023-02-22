@@ -151,7 +151,7 @@ class FileManager:
     def create_header(self, start_date) -> Header:
         '''
         create_header: None -> Header
-        Creates a header for a new file given the first line of data 
+        Creates a header for a new file given the first line of data
         for that file
         '''
         header = Header(self.version, start_date, 0, bytes(self.fstring, 'utf-8'))
@@ -192,7 +192,7 @@ class FileManager:
     def create_new_file(self, time) -> None:
         '''
         create_new_file: header -> None
-        takes in a header. Iterates file count and creates a file with that new 
+        takes in a header. Iterates file count and creates a file with that new
         count as the name. Writes the header to the new file.
         '''
         self.files += 1
@@ -205,7 +205,7 @@ class FileManager:
     def create_new_folder(self) -> None:
         '''
         create_new_folder: None -> None
-        Iterates the folder count and updates the current file with that new 
+        Iterates the folder count and updates the current file with that new
         folder value. Resets file count to 0.
         '''
         self.files = 0
