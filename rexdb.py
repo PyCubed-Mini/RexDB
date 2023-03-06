@@ -128,9 +128,18 @@ class FileManager:
         self.folders = 0
         self.files = 0
         self.version = 0
-        self.db_map = "map.db"
+        self.db_name = "db"
+        self.db_map = f"{self.db_name}/map.mp"
         self.folder_map = ""
         self.current_file = ""
+        self.init_db()
+
+    def init_db(self):
+        '''
+        creates the folder the database will live in. Creates the database map file
+        which will initially contain the user_fstring and the dense_fstring. Creates
+        the first folder which files will go into and assigns the first file name.
+        '''
         self.create_db_map()
         self.create_new_folder()
         self.create_new_file()
@@ -220,20 +229,26 @@ class FileManager:
             print(f"Failed to create folder: {e}")
             return False
 
-    def create_db_map(self):
+    def create_db_map(self, user_fstring: str, dense_fstring: str) -> bool:
         '''
         when db is created a map file will be created the contains start times of 
         each folder and the format of the database.
         '''
+        header_bytes: bytes = bytes(user_fstring + dense_fstring, 'utf-8')
+        self.db_header_size: int = len(header_bytes)
         try:
             with open(self.db_map, "wb+") as file:
-                file.write()
+                file.write(header_bytes)
+                return True
+        except Exception as e:
+            print(f"Error creating Database map file: {e}")
+            return False
 
     def create_folder_map(self):
         '''
         When a new folder is created, a map will be created 
         '''
-        pass
+        self.folder_map = f"{self.db_name}/{self.folders}xx/map.mp"
 
     def update_folder_map(self, time: float):
         '''
@@ -258,6 +273,7 @@ class RexDB:
         self._previouse_time = time.mktime(self._timer_function())
         self._file_manager = FileManager(fstring, bytes_per_file, files_per_folder)
         self._timestamp = time.mktime(self._timer_function())
+        self._file_manager.create_db_map('f' + fstring, self._packer.dense_fstring)
 
     def log(self, data):
         self._timestamp = time.mktime(self._timer_function())
@@ -281,14 +297,13 @@ class RexDB:
 
     def nth(self, n):
         with open(self._file_manager.current_file, "rb") as fd:
-            fd.seek(self._file_manager.header_size + n*self._packer.line_size)
+            fd.seek(n*self._packer.line_size)
             line = fd.read(self._packer.line_size)
             return self._packer.unpack(line)
 
     def col(self, i):
         data = []
         with open(self._file_manager.current_file, "rb") as fd:
-            fd.seek(self._file_manager.header_size)
             for _ in range(self._packer.line_size):
                 line = fd.read(self._packer.line_size)
                 print(line)
@@ -298,10 +313,20 @@ class RexDB:
                 data.append(line[i])
         return data[self._cursor:] + data[:self._cursor]
 
-    def get_data_at_time(time: time.struct_time, fields: tuple):
+    def get_data_at_time(self, time: time.struct_time, fields: tuple):
         '''
         get_data_at_time: time.struct_time -> tuple
         finds the correct row of data for a given time stamp and returns the fields
         that the user queries for.
         '''
-        pass
+        # search through DB map
+        with open(self._file_manager.db_map) as fd:
+            fd.seek(self._file_manager.db_header_size)
+            data = fd.read()
+
+        with open(self._file_manager.current_file, "rb") as fd:
+            for i in range(self._file_manager.lines_per_file):
+                fd.seek(i * self._packer.line_size)
+                timestamp = fd.read(4)
+                if timestamp == time:
+                    line = fd.read(self._packer.line_size - 4)
