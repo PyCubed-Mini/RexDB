@@ -122,49 +122,40 @@ class DensePacker():
             result[index] = unpacked_data[i]
         return tuple(result)
 
-
-class FileManager:
-    def __init__(self, fstring: str, timestamp: float, bytes_per_file: int = 1000, files_per_folder: int = 100) -> None:
-        self.bytes_per_file = bytes_per_file
-        self.fstring = fstring
-        self.fstring_size = self.calc_fstring_size()
-        self.lines_per_file = (self.bytes_per_file // self.fstring_size) + 1
-        self.files_per_folder = files_per_folder
-        self.header_size = 1 + 4 + 4 + 1 + len(fstring) * 1
-        self.folders = 0
-        self.files = 0
-        self.version = 0
-        self.create_new_folder()
-        self.create_new_file(timestamp)
-
-    def calc_fstring_size(self) -> int:
+    @staticmethod
+    def calc_fstring_size(fstring) -> int:
         '''
         calc_fstring_size: None -> int
         calculates and returns the size in bytes for self.fstring
         '''
         char_list = {"c": 1, "?": 1, "h": 2, "i": 4, "f": 4, "Q": 8, "d": 8}
         sum = 0
-        for char in self.fstring:
+        for char in fstring:
             sum += char_list[char]
         return sum
 
-    def create_header(self, start_date) -> Header:
+
+class FileManager:
+    def __init__(self, fstring: str, timestamp: float, bytes_per_file: int = 1000, files_per_folder: int = 100) -> None:
+        self.bytes_per_file = bytes_per_file
+        self.fstring = fstring
+        self.fstring_size = DensePacker.calc_fstring_size(self.fstring)
+        self.lines_per_file = (self.bytes_per_file // self.fstring_size) + 1
+        self.files_per_folder = files_per_folder
+        self.header_size = 1 + 4 + 4 + 1 + len(fstring)
+        self.folders = 0
+        self.files = 0
+        self.version = 0
+        self.create_new_folder()
+        self.create_new_file(timestamp)
+
+    def create_map_entry(self, start_date) -> Header:
         '''
         create_header: None -> Header
         Creates a header for a new file given the first line of data
         for that file
         '''
-        header = Header(self.version, start_date, 0, bytes(self.fstring, 'utf-8'))
-        return header
-
-    def complete_header(self) -> None:
-        '''
-        update_header: None -> None
-        Function will add an end_date to the current file's header.
-        Should only be called when the file has been completed and all lines
-        have been written.
-        '''
-        pass
+        return Header(self.version, start_date, 0, bytes(self.fstring, 'utf-8'))
 
     def write_header(self, time) -> None:
         try:
@@ -186,9 +177,6 @@ class FileManager:
         except Exception as e:
             print(f"failed to write to file: {e}")
 
-        with open(self.current_file, "rb") as file:
-            print(len(file.read()))
-
     def create_new_file(self, time) -> None:
         '''
         create_new_file: header -> None
@@ -196,11 +184,7 @@ class FileManager:
         count as the name. Writes the header to the new file.
         '''
         self.files += 1
-        self.current_file = f'{self.folders}xx/{(self.folders * 100) + self.files:03}.db'
-        try:
-            self.write_header(time)
-        except Exception as e:
-            print(f"Failed to create new file: {e}")
+        self.current_file = f'{self.folders}/{self.folders}.{self.files:03}.db'
 
     def create_new_folder(self) -> None:
         '''
@@ -211,8 +195,8 @@ class FileManager:
         self.files = 0
         self.folders += 1
         try:
-            os.mkdir(f'{self.folders}xx')
-            self.current_file = f'{self.folders}xx/{self.folders + self.files:03}.db'
+            os.mkdir(f'{self.folders}')
+            self.current_file = f'{self.folders}/{self.folders}.{self.files:03}.db'
         except Exception as e:
             print(f"Failed to create folder: {e}")
 
@@ -232,7 +216,6 @@ class RexDB:
         if self._cursor >= self._file_manager.lines_per_file:
             if self._file_manager.files >= self._file_manager.files_per_folder:
                 self._file_manager.create_new_folder()
-            self._file_manager.complete_header()
             self._file_manager.create_new_file(self._timestamp)
             self._cursor = 0
 
@@ -245,14 +228,14 @@ class RexDB:
 
     def nth(self, n):
         with open(self._file_manager.current_file, "rb") as fd:
-            fd.seek(self._file_manager.header_size + n*self._packer.line_size)
+            fd.seek(n*self._packer.line_size)
             line = fd.read(self._packer.line_size)
             return self._packer.unpack(line)
 
     def col(self, i):
         data = []
         with open(self._file_manager.current_file, "rb") as fd:
-            fd.seek(self._file_manager.header_size)
+            fd.seek(0)
             for _ in range(self._packer.line_size):
                 line = fd.read(self._packer.line_size)
                 print(line)
