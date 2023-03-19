@@ -8,11 +8,12 @@ class DensePacketTest(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     def testFormatter(self):
-        db = RexDB('icfc', bytes_per_file=10, files_per_folder=2)
-        self.assertEqual(db._packer.dense_fstring, "ficc")
+        # filemanager automatically adds a float to store Timestamp
+        db = RexDB('icfc', ("money", "volume", "letter", "area"), bytes_per_file=10, files_per_folder=2)
+        self.assertEqual(db._packer.dense_fstring, "fficc")
 
-        db = RexDB("cifh?c", bytes_per_file=10, files_per_folder=2)
-        self.assertEqual(db._packer.dense_fstring, "fihcc?")
+        db = RexDB("cifh?c", ("money", "volume", "letter", "area"), bytes_per_file=10, files_per_folder=2)
+        self.assertEqual(db._packer.dense_fstring, "ffihcc?")
 
     def testEdgeCases(self):
         with self.assertRaises(ValueError):
