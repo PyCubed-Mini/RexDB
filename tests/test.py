@@ -34,7 +34,8 @@ class TestExample(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(db.col(2), [1, 2, 3])
 
-    def test_less_basic(self):
+    def test_one(self):
+        """tests that data can be read and written with more complex fstrings"""
         db = RexDB('Qdcichd?dci', ("money", "volume", "letter", "area"), bytes_per_file=1000, cursor=0)
 
         line_one = (123432543254, 9.2, b'l', 1234, b'p', 1, 9.1, True, 1.1, b'm', 4321)
