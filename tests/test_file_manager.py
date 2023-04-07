@@ -4,7 +4,7 @@ from rexdb import FileManager, RexDB
 
 
 class FileManagerTest(fake_filesystem_unittest.TestCase):
-    def setup(self):
+    def setUp(self):
         self.setUpPyfakefs()
 
     def testFileManager(self):

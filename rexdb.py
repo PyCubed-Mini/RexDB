@@ -153,8 +153,12 @@ class FileManager:
         self.setup()
 
     def setup(self):
+        """
+        runs all setup functions that are needed to create the file structure
+        """
         try:
             os.mkdir(f"db_{self.db_num}")
+            self.create_db_map()
             self.create_new_file()
             self.create_new_folder()
             self.create_db_info()
@@ -163,6 +167,13 @@ class FileManager:
             self.setup()
         except Exception as e:
             print(f"could not setup databse: {e}")
+
+    def create_db_map(self):
+        try:
+            fd = open(self.db_map, "xb")
+            fd.close()
+        except Exception as e:
+            print(f"Failed to initialize DB map: {e}")
 
     def create_db_info(self):
         '''
@@ -193,7 +204,6 @@ class FileManager:
         for that file
         '''
         with open(self.current_map, "ab") as file:
-
             file.write()
         return Header(VERSION_BYTE, start_date, 0, bytes(self.fstring, 'utf-8'))
 
@@ -232,17 +242,21 @@ class FileManager:
             os.mkdir(f'db_{self.db_num}/{self.folders}')
             self.current_file = f'db_{self.db_num}/{self.folders}/{self.folders}.{self.files:03}.db'
             self.current_map = f'db_{self.db_num}/{self.folders}/{self.folders}.map'
+            try:
+                open(self.current_map, "wb")
+            except Exception as e:
+                print(f"Failed to create folder map: {e}")
         except Exception as e:
             print(f"Failed to create new folder: {e}")
             return False
 
-    def start_folder_entry(self, time):
+    def start_folder_entry(self, t):
         """
         stores when a file has started to be used to eventually write to the map 
         """
-        self.file_start_time = time
+        self.file_start_time = t
 
-    def write_to_folder_map(self, time):
+    def write_to_folder_map(self, t):
         """
         write_to_folder_map: time: float -> success: bool
 
@@ -254,12 +268,26 @@ class FileManager:
         to add the timestamp as the endtime for that file in that 
         folder's folder map. 
         """
-        data = struct.pack("ffi", self.file_start_time, time, self.files)
+        # print(self.file_start_time, t)
+        # print(int(self.file_start_time), int(t))
         try:
             with open(self.current_map, "ab") as fd:
+                data = struct.pack("iii", int(self.file_start_time), int(t), self.files)
                 fd.write(data)
+                # udata = struct.unpack("iii", data)
+                # print(udata)
         except Exception as e:
             print(f"could not write to folder map: {e}")
+
+        # try:
+        #     with open(self.current_map, "rb") as fd:
+        #         contents = fd.read()
+        #         length = int(len(contents)/12)
+        #         for i in range(length):
+        #             print(struct.unpack("ddi", contents[i * 12: i * 12 + 12]))
+
+        # except Exception as e:
+        #     print(e)
 
     def start_db_entry(self, time):
         """
@@ -267,7 +295,7 @@ class FileManager:
         """
         self.folder_start_time = time
 
-    def write_to_db_map(self, time):
+    def write_to_db_map(self, t):
         """
         write_to_db_map: time: float -> success: bool
         when new folder is created, adds current timestamp to the 
@@ -279,12 +307,52 @@ class FileManager:
         writes a struct of int (file number), float (start time), 
         float (end time) to the map
         """
-        data = struct.pack("ffi", self.folder_start_time, time, self.folders)
+        # print(self.folder_start_time, t)
+        data = struct.pack("iii", int(self.folder_start_time), int(t), self.folders)
         try:
-            with open(self.db_map, "ab+") as fd:
+            with open(self.db_map, "ab") as fd:
                 fd.write(data)
         except Exception as e:
             print(f"could not write to database map: {e}")
+
+    def location_from_time(self, t: float) -> str:
+        """
+        returns file path for location given a time in the database
+        """
+        files = 0
+        folder = 0
+
+        print(t)
+        # finding folder from DB_map
+        try:
+            with open(self.db_map, "rb") as fd:
+                contents = fd.read()
+                if len(contents) != 0:
+                    lines = int(len(contents) / 12)
+                    for i in range(lines):
+                        (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
+                        if (start_time < t and t < end_time):
+                            folder = num
+                            break
+        except Exception as e:
+            print(f"couldn't access db map: {e}")
+
+        try:
+            with open(f"db_{self.db_num}/{folder}/{folder}.map", "rb") as fd:
+                contents = fd.read()
+                if len(contents) != 0:
+                    lines = int(len(contents) / 12)
+                    for i in range(lines):
+                        (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
+                        if (start_time < t and t < end_time):
+                            files = num
+                            break
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            print(f"couldn't access folder map: {e}")
+
+        return f"db_{self.db_num}/{folder}/{folder}.{files:03}.db"
 
 
 class RexDB:
@@ -300,20 +368,25 @@ class RexDB:
         self._file_manager.start_db_entry(self._prev_timestamp)
         self._file_manager.start_folder_entry(self._prev_timestamp)
 
-    def log(self, data):
+    def log(self, data) -> None:
+        """
+        log: bytes -> None
+        logs the data given into the correct folder and file. Also handles when new
+        folders and files need to be created.
+        """
         self._timestamp = time.mktime(self._timer_function())
 
         if (self._timestamp < self._prev_timestamp):
             raise ValueError("logging backwards in time")
 
         if self._cursor >= self._file_manager.lines_per_file:
+            self._file_manager.write_to_folder_map(self._timestamp)
             if self._file_manager.files >= self._file_manager.files_per_folder - 1:
                 # if no more files can be written in a folder, make new folder
                 self._file_manager.write_to_db_map(self._timestamp)
                 self._file_manager.create_new_folder()
                 self._file_manager.start_db_entry(self._timestamp)
             # if no more lines can be written in a file, make new file
-            self._file_manager.write_to_folder_map(self._timestamp)
             self._file_manager.create_new_file()
             self._file_manager.start_folder_entry(self._timestamp)
             self._cursor = 0
@@ -321,6 +394,7 @@ class RexDB:
         data_bytes = self._packer.pack((self._timestamp, *data))
         self._file_manager.write_file(data_bytes)
         self._cursor += 1
+        self._prev_timestamp = self._timestamp
 
     def nth(self, n):
         with open(self._file_manager.current_file, "rb") as fd:
@@ -341,5 +415,14 @@ class RexDB:
                 data.append(line[i])
         return data[self._cursor:] + data[:self._cursor]
 
-    def get_data_at_time(time: time.struct_time):
-        pass
+    def get_data_at_time(self, t: time.struct_time):
+        filepath = self._file_manager.location_from_time(time.mktime(t))
+        try:
+            with open(filepath, "rb") as fd:
+                for _ in range(self._file_manager.lines_per_file):
+                    raw_data = fd.read(self._packer.line_size)
+                    data = self._packer.unpack(raw_data)
+                    if (t > data[0]):
+                        return data
+        except Exception as e:
+            print(f"could not find data: {e}")
