@@ -279,16 +279,6 @@ class FileManager:
         except Exception as e:
             print(f"could not write to folder map: {e}")
 
-        # try:
-        #     with open(self.current_map, "rb") as fd:
-        #         contents = fd.read()
-        #         length = int(len(contents)/12)
-        #         for i in range(length):
-        #             print(struct.unpack("ddi", contents[i * 12: i * 12 + 12]))
-
-        # except Exception as e:
-        #     print(e)
-
     def start_db_entry(self, time):
         """
         stores start time of file for later use to write to the map file
@@ -318,11 +308,13 @@ class FileManager:
     def location_from_time(self, t: float) -> str:
         """
         returns file path for location given a time in the database
+        REQUIRES: first entry time < t 
         """
-        files = 0
-        folder = 0
+        file = 1
+        folder = 1
+        found_folder = False
+        found_file = False
 
-        print(t)
         # finding folder from DB_map
         try:
             with open(self.db_map, "rb") as fd:
@@ -331,12 +323,16 @@ class FileManager:
                     lines = int(len(contents) / 12)
                     for i in range(lines):
                         (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start_time < t and t <= end_time):
+                        if (start_time <= t and t <= end_time):
                             folder = num
+                            found_folder = True
                             break
+                    if not found_folder:
+                        folder = self.folders
         except Exception as e:
             print(f"couldn't access db map: {e}")
 
+        # finding file from folder_map
         try:
             with open(f"db_{self.db_num}/{folder}/{folder}.map", "rb") as fd:
                 contents = fd.read()
@@ -344,15 +340,16 @@ class FileManager:
                     lines = int(len(contents) / 12)
                     for i in range(lines):
                         (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start_time < t and t <= end_time):
-                            files = num
+                        if (start_time <= t and t <= end_time):
+                            file = num
+                            found_file = True
                             break
-        except FileNotFoundError:
-            pass
+                    if not found_file:
+                        file = self.files
         except Exception as e:
             print(f"couldn't access folder map: {e}")
 
-        return f"db_{self.db_num}/{folder}/{folder}.{files:03}.db"
+        return f"db_{self.db_num}/{folder}/{folder}.{file:03}.db"
 
 
 class RexDB:
@@ -362,7 +359,8 @@ class RexDB:
         self._field_names = ("timestamp", *field_names)
         self._cursor = cursor
         self._timer_function = time_method
-        self._prev_timestamp = time.mktime(self._timer_function())
+        self._init_time = time.mktime(self._timer_function())
+        self._prev_timestamp = self._init_time
         self._timestamp = 0
         self._file_manager = FileManager("f" + fstring, self._field_names, bytes_per_file, files_per_folder)
         self._file_manager.start_db_entry(self._prev_timestamp)
@@ -417,12 +415,14 @@ class RexDB:
 
     def get_data_at_time(self, t: time.struct_time):
         filepath = self._file_manager.location_from_time(time.mktime(t))
+        if self._init_time < t:
+            raise ValueError("time is before database init time")
         try:
             with open(filepath, "rb") as fd:
                 for _ in range(self._file_manager.lines_per_file):
                     raw_data = fd.read(self._packer.line_size)
                     data = self._packer.unpack(raw_data)
-                    if (t > data[0]):
+                    if (data[0] < t):
                         return data
         except Exception as e:
             print(f"could not find data: {e}")
