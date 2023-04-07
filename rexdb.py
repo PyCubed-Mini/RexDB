@@ -159,8 +159,8 @@ class FileManager:
         try:
             os.mkdir(f"db_{self.db_num}")
             self.create_db_map()
-            self.create_new_file()
             self.create_new_folder()
+            self.create_new_file()
             self.create_db_info()
         except FileExistsError:
             self.db_num += 1
@@ -331,7 +331,7 @@ class FileManager:
                     lines = int(len(contents) / 12)
                     for i in range(lines):
                         (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start_time < t and t < end_time):
+                        if (start_time < t and t <= end_time):
                             folder = num
                             break
         except Exception as e:
@@ -344,7 +344,7 @@ class FileManager:
                     lines = int(len(contents) / 12)
                     for i in range(lines):
                         (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start_time < t and t < end_time):
+                        if (start_time < t and t <= end_time):
                             files = num
                             break
         except FileNotFoundError:
@@ -381,7 +381,7 @@ class RexDB:
 
         if self._cursor >= self._file_manager.lines_per_file:
             self._file_manager.write_to_folder_map(self._timestamp)
-            if self._file_manager.files >= self._file_manager.files_per_folder - 1:
+            if self._file_manager.files >= self._file_manager.files_per_folder:
                 # if no more files can be written in a folder, make new folder
                 self._file_manager.write_to_db_map(self._timestamp)
                 self._file_manager.create_new_folder()
