@@ -137,7 +137,8 @@ class DensePacker():
 
 
 class FileManager:
-    def __init__(self, fstring: str, field_names: tuple, bytes_per_file: int = 1000, files_per_folder: int = 100) -> None:
+    def __init__(self, fstring: str, field_names: tuple,
+                 bytes_per_file: int = 1000, files_per_folder: int = 100) -> None:
         self.bytes_per_file = bytes_per_file
         self.db_num = 0
         self.fstring = fstring
@@ -178,7 +179,7 @@ class FileManager:
     def create_db_info(self):
         '''
         create_db_info: unit -> void
-        Creates a file that will contains the version, format character length, 
+        Creates a file that will contains the version, format character length,
         user format, dense format, and field name length followed by field name
         for all field names.
         '''
@@ -252,7 +253,7 @@ class FileManager:
 
     def start_folder_entry(self, t):
         """
-        stores when a file has started to be used to eventually write to the map 
+        stores when a file has started to be used to eventually write to the map
         """
         self.file_start_time = t
 
@@ -261,15 +262,15 @@ class FileManager:
         write_to_folder_map: time: float -> success: bool
 
         When new file is created within a folder, this function is called
-        to add the timestamp as the start time for that file in the 
+        to add the timestamp as the start time for that file in the
         folder's folder map.
 
         When a file is finished being written to, this function is called
-        to add the timestamp as the endtime for that file in that 
-        folder's folder map. 
+        to add the timestamp as the endtime for that file in that
+        folder's folder map.
+
+        Written as Start Time, End Time, File Number
         """
-        # print(self.file_start_time, t)
-        # print(int(self.file_start_time), int(t))
         try:
             with open(self.current_map, "ab") as fd:
                 data = struct.pack("iii", int(self.file_start_time), int(t), self.files)
@@ -288,13 +289,13 @@ class FileManager:
     def write_to_db_map(self, t):
         """
         write_to_db_map: time: float -> success: bool
-        when new folder is created, adds current timestamp to the 
+        when new folder is created, adds current timestamp to the
         database map as a start time.
 
         When a folder is finished being written to this function will
         add the timestamp as that folder's end time.
 
-        writes a struct of int (file number), float (start time), 
+        writes a struct of int (file number), float (start time),
         float (end time) to the map
         """
         # print(self.folder_start_time, t)
@@ -308,7 +309,7 @@ class FileManager:
     def location_from_time(self, t: float) -> str:
         """
         returns file path for location given a time in the database
-        REQUIRES: first entry time < t 
+        REQUIRES: first entry time < t
         """
         file = 1
         folder = 1
@@ -389,7 +390,8 @@ class FileManager:
 
 
 class RexDB:
-    def __init__(self, fstring, field_names: tuple, bytes_per_file=1000, files_per_folder=50, cursor=0, time_method=time.localtime):
+    def __init__(self, fstring, field_names: tuple, bytes_per_file=1000,
+                 files_per_folder=50, cursor=0, time_method=time.localtime):
         # add "f" as time will not be input by caller
         self._packer = DensePacker("i" + fstring)
         self._field_names = ("timestamp", *field_names)
@@ -450,6 +452,14 @@ class RexDB:
         return data[self._cursor:] + data[:self._cursor]
 
     def get_data_at_time(self, t: time.struct_time):
+        """
+        struct_time -> tuple
+        Given a time struct that was used to log in the database, this will return the first entry
+        logged at that time.
+
+        The precision of this function goes only to the nearest second because of the restrictions
+        of struct_time
+        """
         tfloat = time.mktime(t)
         filepath = self._file_manager.location_from_time(tfloat)
         if tfloat < self._init_time:
@@ -465,7 +475,15 @@ class RexDB:
             print(f"could not find data: {e}")
         return None
 
-    def get_data_at_range(self, start_time, end_time):
+    def get_data_at_range(self, start_time: time.struct_time, end_time: time.struct_time):
+        """
+        (struct_time * struct_time) -> tuple
+        Given a range of time, first argument of start time, second argument of end time
+        this function will return all database entries falling within that range
+
+        the struct_time datatype only holds precision of the nearest second, so this
+        database only has precision to the nearest second as well.
+        """
         start = time.mktime(start_time)
         end = time.mktime(end_time)
         filepaths = self._file_manager.locations_from_range(start, end)
@@ -479,6 +497,6 @@ class RexDB:
                         if (start <= data[0] and data[0] <= end):
                             entries.append(data)
             except Exception as e:
-                print("could not search file ")
+                print(f"could not search file: {e}")
 
         return entries
