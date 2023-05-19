@@ -323,7 +323,7 @@ class FileManager:
                     lines = int(len(contents) / 12)
                     for i in range(lines):
                         (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start_time <= t and t <= end_time):
+                        if (start_time <= t and t < end_time):
                             folder = num
                             found_folder = True
                             break
@@ -340,7 +340,7 @@ class FileManager:
                     lines = int(len(contents) / 12)
                     for i in range(lines):
                         (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start_time <= t and t <= end_time):
+                        if (start_time <= t and t < end_time):
                             file = num
                             found_file = True
                             break
@@ -351,18 +351,54 @@ class FileManager:
 
         return f"db_{self.db_num}/{folder}/{folder}.{file:03}.db"
 
+    def locations_from_range(self, start: float, end: float):
+        folders = []
+        files = []
+        try:
+            with open(self.db_map, "rb") as fd:
+                contents = fd.read()
+                if len(contents) != 0:
+                    lines = int(len(contents) / 12)
+                    for i in range(lines):
+                        (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
+                        if (start <= start_time and start_time <= end or start <= end_time and end_time <= end):
+                            found_folder = True
+                            folders.append(num)
+                    if not found_folder:
+                        folders = [self.folders]
+        except Exception as e:
+            print(f"couldn't access db map: {e}")
+
+        for folder in folders:
+            try:
+                with open(f"db_{self.db_num}/{folder}/{folder}.map", "rb") as fd:
+                    contents = fd.read()
+                    if len(contents) != 0:
+                        lines = int(len(contents) / 12)
+                        for i in range(lines):
+                            (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
+                            if (start <= start_time and start_time <= end or start <= end_time and end_time <= end):
+                                found_file = True
+                                files.append(f"db_{self.db_num}/{folder}/{folder}.{num:03}.db")
+                        if not found_file:
+                            files = [f"db_{self.db_num}/{folder}/{folder}.{lines:03}.db"]
+            except Exception as e:
+                print(f"couldn't access folder map for {folder}: {e}")
+
+        return files
+
 
 class RexDB:
     def __init__(self, fstring, field_names: tuple, bytes_per_file=1000, files_per_folder=50, cursor=0, time_method=time.localtime):
         # add "f" as time will not be input by caller
-        self._packer = DensePacker("f" + fstring)
+        self._packer = DensePacker("i" + fstring)
         self._field_names = ("timestamp", *field_names)
         self._cursor = cursor
         self._timer_function = time_method
         self._init_time = time.mktime(self._timer_function())
         self._prev_timestamp = self._init_time
         self._timestamp = 0
-        self._file_manager = FileManager("f" + fstring, self._field_names, bytes_per_file, files_per_folder)
+        self._file_manager = FileManager("i" + fstring, self._field_names, bytes_per_file, files_per_folder)
         self._file_manager.start_db_entry(self._prev_timestamp)
         self._file_manager.start_folder_entry(self._prev_timestamp)
 
@@ -372,7 +408,7 @@ class RexDB:
         logs the data given into the correct folder and file. Also handles when new
         folders and files need to be created.
         """
-        self._timestamp = time.mktime(self._timer_function())
+        self._timestamp = (int)(time.mktime(self._timer_function()))
 
         if (self._timestamp < self._prev_timestamp):
             raise ValueError("logging backwards in time")
@@ -414,15 +450,35 @@ class RexDB:
         return data[self._cursor:] + data[:self._cursor]
 
     def get_data_at_time(self, t: time.struct_time):
-        filepath = self._file_manager.location_from_time(time.mktime(t))
-        if self._init_time < t:
+        tfloat = time.mktime(t)
+        filepath = self._file_manager.location_from_time(tfloat)
+        if tfloat < self._init_time:
             raise ValueError("time is before database init time")
         try:
             with open(filepath, "rb") as fd:
                 for _ in range(self._file_manager.lines_per_file):
                     raw_data = fd.read(self._packer.line_size)
                     data = self._packer.unpack(raw_data)
-                    if (data[0] < t):
+                    if (data[0] == tfloat):
                         return data
         except Exception as e:
             print(f"could not find data: {e}")
+        return None
+
+    def get_data_at_range(self, start_time, end_time):
+        start = time.mktime(start_time)
+        end = time.mktime(end_time)
+        filepaths = self._file_manager.locations_from_range(start, end)
+        entries = []
+        for filepath in filepaths:
+            try:
+                with open(filepath, "rb") as file:
+                    for _ in range(self._file_manager.lines_per_file):
+                        raw_data = file.read(self._packer.line_size)
+                        data = self._packer.unpack(raw_data)
+                        if (start <= data[0] and data[0] <= end):
+                            entries.append(data)
+            except Exception as e:
+                print("could not search file ")
+
+        return entries
