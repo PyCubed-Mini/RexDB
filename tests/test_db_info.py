@@ -28,6 +28,3 @@ class DbInfoTest(fake_filesystem_unittest.TestCase):
             self.assertEqual(info[9].decode('utf-8'), fileManager.fields[2])
             self.assertEqual(info[10], len(fileManager.fields[3]))
             self.assertEqual(info[11].decode('utf-8'), fileManager.fields[3])
-
-    def testAdvanced(self):
-        self.assertEqual("stuff", "stuff")
