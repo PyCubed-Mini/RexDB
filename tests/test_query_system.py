@@ -2,7 +2,6 @@ from pyfakefs import fake_filesystem_unittest
 from rexdb import RexDB
 import random
 import time
-import struct
 
 
 class QueryTests(fake_filesystem_unittest.TestCase):
@@ -12,36 +11,30 @@ class QueryTests(fake_filesystem_unittest.TestCase):
     def test_file_path(self):
         db = RexDB('if', ("integer", "float"), 20, 2)
         times = []
-        test_time_1 = 0
-        test_time_2 = 0
         for i in range(20):
             times.append(time.localtime())
             db.log((i, random.random()))
             time.sleep(1)
 
-        index = 1
-        # for t in times:
-        #     filepath = db._file_manager.location_from_time(time.mktime(t))
-
         filepath0 = db._file_manager.location_from_time(time.mktime(times[0]))
-        assert (filepath0 == "db_0/1/1.001.db")
+        self.assertEqual(filepath0, "db_0/1/1.001.db")
 
         filepath1 = db._file_manager.location_from_time(time.mktime(times[1]))
-        assert (filepath1 == "db_0/1/1.001.db")
+        self.assertEqual(filepath1, "db_0/1/1.001.db")
 
         filepath2 = db._file_manager.location_from_time(time.mktime(times[2]))
-        assert (filepath2 == "db_0/1/1.002.db")
+        self.assertEqual(filepath2, "db_0/1/1.002.db")
 
         filepath3 = db._file_manager.location_from_time(time.mktime(times[3]))
-        assert (filepath3 == "db_0/1/1.002.db")
+        self.assertEqual(filepath3, "db_0/1/1.002.db")
 
-        filepath2 = db._file_manager.location_from_time(time.mktime(times[10]))
-        print(filepath2)
-        assert (filepath2 == "db_0/3/3.002.db")
+        filepath4 = db._file_manager.location_from_time(time.mktime(times[10]))
+        print(filepath4)
+        self.assertEqual(filepath4, "db_0/3/3.002.db")
 
-        filepath3 = db._file_manager.location_from_time(time.mktime(times[13]))
-        print(filepath3)
-        assert (filepath3 == "db_0/4/4.001.db")
+        filepath5 = db._file_manager.location_from_time(time.mktime(times[13]))
+        print(filepath5)
+        self.assertEqual(filepath5, "db_0/4/4.001.db")
 
     def test_file_path_2(self):
         db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool", "index * 10000"))
@@ -93,13 +86,27 @@ class QueryTests(fake_filesystem_unittest.TestCase):
             times.append(time.localtime())
             boolval = True if random.random() < 0.5 else False
             db.log((i, random.random(), random.random() * 10, boolval, i * 10000))
-            time.sleep(5)
+            time.sleep(2)
 
         # test returned filepaths
         filepaths = db._file_manager.locations_from_range(time.mktime(times[5]), time.mktime(times[10]))
-        # print(filepaths)
         for i in range(5, 10):
             filepath = db._file_manager.location_from_time(time.mktime(times[i]))
-            assert (filepath in filepaths)
+            self.assertTrue(filepath in filepaths)
 
         data = db.get_data_at_range(times[5], times[10])
+
+        # checks that correct files are obtained
+        self.assertEqual(data[0][1], 5)
+        self.assertEqual(data[1][1], 6)
+        self.assertEqual(data[2][1], 7)
+        self.assertEqual(data[3][1], 8)
+        self.assertEqual(data[4][1], 9)
+        self.assertEqual(data[5][1], 10)
+
+        data = db.get_data_at_range(times[15], times[19])
+        self.assertEqual(data[0][1], 15)
+        self.assertEqual(data[1][1], 16)
+        self.assertEqual(data[2][1], 17)
+        self.assertEqual(data[3][1], 18)
+        self.assertEqual(data[4][1], 19)

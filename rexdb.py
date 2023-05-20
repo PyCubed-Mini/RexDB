@@ -355,6 +355,8 @@ class FileManager:
     def locations_from_range(self, start: float, end: float):
         folders = []
         files = []
+        found_folder = False
+
         try:
             with open(self.db_map, "rb") as fd:
                 contents = fd.read()
@@ -367,9 +369,12 @@ class FileManager:
                             folders.append(num)
                     if not found_folder:
                         folders = [self.folders]
+                    if end_time <= end:
+                        folders.append(self.folders)
         except Exception as e:
             print(f"couldn't access db map: {e}")
 
+        found_file = True
         for folder in folders:
             try:
                 with open(f"db_{self.db_num}/{folder}/{folder}.map", "rb") as fd:
@@ -383,6 +388,8 @@ class FileManager:
                                 files.append(f"db_{self.db_num}/{folder}/{folder}.{num:03}.db")
                         if not found_file:
                             files = [f"db_{self.db_num}/{folder}/{folder}.{lines:03}.db"]
+                        if end_time <= end and folder == self.folders:
+                            files.append(f"db_{self.db_num}/{folder}/{folder}.{self.files:03}.db")
             except Exception as e:
                 print(f"couldn't access folder map for {folder}: {e}")
 
