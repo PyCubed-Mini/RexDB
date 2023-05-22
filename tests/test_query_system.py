@@ -39,7 +39,8 @@ class QueryTests(fake_filesystem_unittest.TestCase):
         self.assertEqual(filepath5, "db_0/4/4.001.db")
 
     def test_file_path_2(self):
-        db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool", "index * 10000"), time_method=self.time.gmtime)
+        db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool", "index * 10000"),
+                   time_method=self.time.gmtime)
         times = []
         # log some stuff
         for i in range(200):
@@ -81,7 +82,8 @@ class QueryTests(fake_filesystem_unittest.TestCase):
             self.assertEqual(data[1], data_entries[i][0])
 
     def test_file_range(self):
-        db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool", "index * 10000"), 20, 2, time_method=self.time.gmtime)
+        db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool",
+                   "index * 10000"), 20, 2, time_method=self.time.gmtime)
         times = []
         # log some stuff
         for i in range(20):
