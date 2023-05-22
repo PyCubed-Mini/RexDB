@@ -156,8 +156,6 @@ class FileManager:
             with open(self.current_map, "ab") as fd:
                 data = struct.pack("iii", int(self.file_start_time), int(t), self.files)
                 fd.write(data)
-                # udata = struct.unpack("iii", data)
-                # print(udata)
         except Exception as e:
             print(f"could not write to folder map: {e}")
 
@@ -179,7 +177,6 @@ class FileManager:
         writes a struct of int (file number), float (start time),
         float (end time) to the map
         """
-        # print(self.folder_start_time, t)
         data = struct.pack("iii", int(self.folder_start_time), int(t), self.folders)
         try:
             with open(self.db_map, "ab") as fd:

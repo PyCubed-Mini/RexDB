@@ -51,9 +51,7 @@ class DensePacker():
         that is in the user_format
         '''
         result = [0] * self.fstring_length
-        # print(len(data))
         unpacked_data = struct.unpack(self.dense_fstring, data)
-        # print(unpacked_data)
         for i in range(self.fstring_length):
             index = self.user_dense_map[i]
             result[index] = unpacked_data[i]
