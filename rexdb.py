@@ -496,7 +496,7 @@ class RexDB:
         the struct_time datatype only holds precision of the nearest second, so this
         database only has precision to the nearest second as well.
 
-        O(n) time complexity, but faster than querying based on other fields because the map 
+        O(n) time complexity, but faster than querying based on other fields because the map
         files will significantly decrease the coefficient.
         """
         start = time.mktime(start_time)
@@ -528,12 +528,15 @@ class RexDB:
         in field, while goal should be -1, 0, or 1. -1 meaning less than, 0 meaning
         equal to, 1 meaning greater than.
 
-        cmp_fn is an optional field. It is the comparison function you are using 
-        to compare your threshold with the data stored in the database. The defulat 
+        cmp_fn is an optional field. It is the comparison function you are using
+        to compare your threshold with the data stored in the database. The default
         is an integer comparison function.
 
         the start_time and end_time fields are optional fields to limit your search
         to a specific time range.
+
+        The complexity of this function if O(n). This function does not benefit from
+        the speed increase that the map files provide.
         """
 
         entries = []
