@@ -1,6 +1,7 @@
 import struct
-import os
 import time
+import file_manager
+import dense_packer
 try:
     from ucollections import namedtuple
 except ImportError:
@@ -394,14 +395,15 @@ class RexDB:
     def __init__(self, fstring, field_names: tuple, bytes_per_file=1000,
                  files_per_folder=50, cursor=0, time_method=time.gmtime):
         # add "f" as time will not be input by caller
-        self._packer = DensePacker("i" + fstring)
+        self._packer = dense_packer.DensePacker("i" + fstring)
         self._field_names = ("timestamp", *field_names)
         self._cursor = cursor
         self._timer_function = time_method
         self._init_time = time.mktime(self._timer_function())
         self._prev_timestamp = self._init_time
         self._timestamp = 0
-        self._file_manager = FileManager("i" + fstring, self._field_names, bytes_per_file, files_per_folder)
+        self._file_manager = file_manager.FileManager(
+            "i" + fstring, self._field_names, bytes_per_file, files_per_folder)
         self._file_manager.start_db_entry(self._prev_timestamp)
         self._file_manager.start_folder_entry(self._prev_timestamp)
 
