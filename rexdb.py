@@ -1,7 +1,6 @@
 import struct
 import os
 import time
-import string
 try:
     from ucollections import namedtuple
 except ImportError:
@@ -544,17 +543,21 @@ class RexDB:
         # get files to search
         if start_time and end_time:
             # If start and end times were specified only search files that fall within that range.
-            filepaths = self._file_manager.locations_from_range(start_time, end_time)
+            start = time.mktime(start_time)
+            end = time.mktime(end_time)
         elif start_time:
             # if only start time specified search from start time to now
-            filepaths = self._file_manager.locations_from_range(start_time, self._timer_function())
+            start = time.mktime(start_time)
+            end = time.mktime(self._timer_function())
         else:
             # if neither are specified search from the database's start to now
-            filepaths = self._file_manager.locations_from_range(self._init_time, self._timer_function())
+            start = time.mktime(self._init_time)
+            end = time.mktime(self._timer_function())
 
+        filepaths = self._file_manager.locations_from_range(start, end)
         # get the correct field index for comparison
-        for f, i in enumerate(self._field_names):
-            if string.lower(field) == string.lower(f):
+        for i, f in enumerate(self._field_names):
+            if field.lower() == f.lower():
                 field_index = i
 
         # access every file
