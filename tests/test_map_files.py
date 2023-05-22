@@ -1,12 +1,13 @@
 from pyfakefs import fake_filesystem_unittest
 from rexdb import RexDB
-import time
 import struct
+from tests.faketime import FakeTime
 
 
 class MapTests(fake_filesystem_unittest.TestCase):
     def setUp(self) -> None:
         self.setUpPyfakefs()
+        self.time = FakeTime()
 
     def test_1(self):
         """
@@ -21,21 +22,21 @@ class MapTests(fake_filesystem_unittest.TestCase):
         so the exact bytes per file will be 21. It will have exactly 2 files
         per folder
         '''
-        db = RexDB('ifc', ("integer", "float", "character"), 20, 2)
+        db = RexDB('ifc', ("integer", "float", "character"), 20, 2, time_method=self.time.gmtime)
 
         # create database of 1 folder and 2 files
         # will enter 2 entries per file
-        log_1_timestamp = time.mktime(time.gmtime())
+        log_1_timestamp = int(self.time.time())
         db.log((50, 8.9, b'l'))
-        time.sleep(2)
+        self.time.sleep(2)
         db.log((20, 7.6, b'p'))
-        time.sleep(2)
-        log_3_timestamp = time.mktime(time.gmtime())
+        self.time.sleep(2)
+        log_3_timestamp = int(self.time.time())
         db.log((40, 3.2, b'd'))
-        time.sleep(2)
+        self.time.sleep(2)
         db.log((30, 100.4, b'd'))
-        time.sleep(2)
-        log_5_timestamp = time.mktime(time.gmtime())
+        self.time.sleep(2)
+        log_5_timestamp = int(self.time.time())
         db.log((10, 9.8, b'k'))
 
         # correctness of folder 1 map

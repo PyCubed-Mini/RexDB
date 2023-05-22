@@ -2,19 +2,21 @@ from pyfakefs import fake_filesystem_unittest
 from rexdb import RexDB
 import random
 import time
+from tests.faketime import FakeTime
 
 
 class QueryTests(fake_filesystem_unittest.TestCase):
     def setUp(self) -> None:
         self.setUpPyfakefs()
+        self.time = FakeTime()
 
     def test_file_path(self):
-        db = RexDB('if', ("integer", "float"), 20, 2)
+        db = RexDB('if', ("integer", "float"), 20, 2, time_method=self.time.gmtime)
         times = []
         for i in range(20):
-            times.append(time.gmtime())
+            times.append(self.time.gmtime())
             db.log((i, random.random()))
-            time.sleep(1)
+            self.time.sleep(1)
 
         filepath0 = db._file_manager.location_from_time(time.mktime(times[0]))
         self.assertEqual(filepath0, "db_0/1/1.001.db")
@@ -37,14 +39,15 @@ class QueryTests(fake_filesystem_unittest.TestCase):
         self.assertEqual(filepath5, "db_0/4/4.001.db")
 
     def test_file_path_2(self):
-        db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool", "index * 10000"))
+        db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool", "index * 10000"),
+                   time_method=self.time.gmtime)
         times = []
         # log some stuff
         for i in range(200):
-            times.append(time.gmtime())
+            times.append(self.time.gmtime())
             boolval = True if random.random() < 0.5 else False
             db.log((i, random.random(), random.random() * 10, boolval, i * 10000))
-            time.sleep(0.5)
+            self.time.sleep(0.5)
 
         # test returned filepaths
         filepath = db._file_manager.location_from_time(time.mktime(times[5]))
@@ -63,15 +66,15 @@ class QueryTests(fake_filesystem_unittest.TestCase):
         self.assertEqual(filepath, "db_0/1/1.006.db")
 
     def test_data_1(self):
-        db = RexDB('if', ("integer", "float"), 20, 2)
+        db = RexDB('if', ("integer", "float"), 20, 2, time_method=self.time.gmtime)
         times = []
         data_entries = []
         for i in range(20):
-            times.append(time.gmtime())
+            times.append(self.time.gmtime())
             data = (i, random.random())
             data_entries.append(data)
             db.log(data)
-            time.sleep(3)
+            self.time.sleep(3)
 
         # test returned data
         for i in range(0, 20):
@@ -79,14 +82,15 @@ class QueryTests(fake_filesystem_unittest.TestCase):
             self.assertEqual(data[1], data_entries[i][0])
 
     def test_file_range(self):
-        db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool", "index * 10000"), 20, 2)
+        db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool",
+                   "index * 10000"), 20, 2, time_method=self.time.gmtime)
         times = []
         # log some stuff
         for i in range(20):
-            times.append(time.gmtime())
+            times.append(self.time.gmtime())
             boolval = True if random.random() < 0.5 else False
             db.log((i, random.random(), random.random() * 10, boolval, i * 10000))
-            time.sleep(2)
+            self.time.sleep(2)
 
         # test returned filepaths
         filepaths = db._file_manager.locations_from_range(time.mktime(times[5]), time.mktime(times[10]))
