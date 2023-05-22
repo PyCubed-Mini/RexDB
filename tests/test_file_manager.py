@@ -1,10 +1,10 @@
 from pyfakefs import fake_filesystem_unittest
 
-from rexdb import FileManager, RexDB
+from rexdb import RexDB, FileManager
 
 
 class FileManagerTest(fake_filesystem_unittest.TestCase):
-    def setup(self):
+    def setUp(self):
         self.setUpPyfakefs()
 
     def testFileManager(self):
@@ -14,7 +14,7 @@ class FileManagerTest(fake_filesystem_unittest.TestCase):
         assert (filemanager.lines_per_file == 1)
 
     def testFileWrite(self):
-        db = RexDB("Qcfc", 20, 2)
+        db = RexDB("Qcfc", ("Long float, char1, float, char2, "), 20, 2)
 
         db.log((111111111, b'l', 9.8, b'p'))
         db.log((222222222, b'p', 8.7, b'p'))
