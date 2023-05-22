@@ -1,6 +1,7 @@
 import struct
 import os
 import time
+import string
 try:
     from ucollections import namedtuple
 except ImportError:
@@ -404,8 +405,8 @@ class RexDB:
         self._field_names = ("timestamp", *field_names)
         self._cursor = cursor
         self._timer_function = time_method
-        self._init_time = time.mktime(self._timer_function())
-        self._prev_timestamp = self._init_time
+        self._init_time = self._timer_function()
+        self._prev_timestamp = time.mktime(self._init_time)
         self._timestamp = 0
         self._file_manager = FileManager("i" + fstring, self._field_names, bytes_per_file, files_per_folder)
         self._file_manager.start_db_entry(self._prev_timestamp)
@@ -439,6 +440,10 @@ class RexDB:
         self._cursor += 1
         self._prev_timestamp = self._timestamp
 
+    @staticmethod
+    def int_cmp(x, y):
+        return (x > y) - (x < y)
+
     def nth(self, n):
         with open(self._file_manager.current_file, "rb") as fd:
             fd.seek(n*self._packer.line_size)
@@ -469,7 +474,7 @@ class RexDB:
         """
         tfloat = time.mktime(t)
         filepath = self._file_manager.location_from_time(tfloat)
-        if tfloat < self._init_time:
+        if tfloat < time.mktime(self._init_time):
             raise ValueError("time is before database init time")
         try:
             with open(filepath, "rb") as fd:
@@ -490,6 +495,9 @@ class RexDB:
 
         the struct_time datatype only holds precision of the nearest second, so this
         database only has precision to the nearest second as well.
+
+        O(n) time complexity, but faster than querying based on other fields because the map 
+        files will significantly decrease the coefficient.
         """
         start = time.mktime(start_time)
         end = time.mktime(end_time)
@@ -502,6 +510,59 @@ class RexDB:
                         raw_data = file.read(self._packer.line_size)
                         data = self._packer.unpack(raw_data)
                         if (start <= data[0] and data[0] <= end):
+                            entries.append(data)
+            except Exception as e:
+                print(f"could not search file: {e}")
+
+        return entries
+
+    def get_data_at_field_threshold(self, field: str, threshold, goal, cmp_fn=int_cmp, start_time=None, end_time=None):
+        """
+        string * 'a * ('a * 'a -> ORDER) * struct_time * struct_time -> list
+
+        field is a string and is the name of the field you want to query on.
+
+        Threshold is the value that you want to compare the data to and the
+        goal is if you want the data to be less than, equal to, or greater
+        than your threshold. Threshold should be the same type as the data stored
+        in field, while goal should be -1, 0, or 1. -1 meaning less than, 0 meaning
+        equal to, 1 meaning greater than.
+
+        cmp_fn is an optional field. It is the comparison function you are using 
+        to compare your threshold with the data stored in the database. The defulat 
+        is an integer comparison function.
+
+        the start_time and end_time fields are optional fields to limit your search
+        to a specific time range.
+        """
+
+        entries = []
+        filepaths = []
+        # get files to search
+        if start_time and end_time:
+            # If start and end times were specified only search files that fall within that range.
+            filepaths = self._file_manager.locations_from_range(start_time, end_time)
+        elif start_time:
+            # if only start time specified search from start time to now
+            filepaths = self._file_manager.locations_from_range(start_time, self._timer_function())
+        else:
+            # if neither are specified search from the database's start to now
+            filepaths = self._file_manager.locations_from_range(self._init_time, self._timer_function())
+
+        # get the correct field index for comparison
+        for f, i in enumerate(self._field_names):
+            if string.lower(field) == string.lower(f):
+                field_index = i
+
+        # access every file
+        for filepath in filepaths:
+            try:
+                with open(filepath, "rb") as file:
+                    for _ in range(self._file_manager.lines_per_file):
+                        raw_data = file.read(self._packer.line_size)
+                        data = self._packer.unpack(raw_data)
+                        # compare entry and threshold and see if they match the goal
+                        if (cmp_fn(data[field_index], threshold) == goal):
                             entries.append(data)
             except Exception as e:
                 print(f"could not search file: {e}")
