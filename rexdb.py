@@ -398,7 +398,7 @@ class FileManager:
 
 class RexDB:
     def __init__(self, fstring, field_names: tuple, bytes_per_file=1000,
-                 files_per_folder=50, cursor=0, time_method=time.localtime):
+                 files_per_folder=50, cursor=0, time_method=time.gmtime):
         # add "f" as time will not be input by caller
         self._packer = DensePacker("i" + fstring)
         self._field_names = ("timestamp", *field_names)

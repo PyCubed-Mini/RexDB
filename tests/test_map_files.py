@@ -25,17 +25,17 @@ class MapTests(fake_filesystem_unittest.TestCase):
 
         # create database of 1 folder and 2 files
         # will enter 2 entries per file
-        log_1_timestamp = time.mktime(time.localtime())
+        log_1_timestamp = time.mktime(time.gmtime())
         db.log((50, 8.9, b'l'))
         time.sleep(2)
         db.log((20, 7.6, b'p'))
         time.sleep(2)
-        log_3_timestamp = time.mktime(time.localtime())
+        log_3_timestamp = time.mktime(time.gmtime())
         db.log((40, 3.2, b'd'))
         time.sleep(2)
         db.log((30, 100.4, b'd'))
         time.sleep(2)
-        log_5_timestamp = time.mktime(time.localtime())
+        log_5_timestamp = time.mktime(time.gmtime())
         db.log((10, 9.8, b'k'))
 
         # correctness of folder 1 map

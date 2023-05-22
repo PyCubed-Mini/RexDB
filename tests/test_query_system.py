@@ -12,7 +12,7 @@ class QueryTests(fake_filesystem_unittest.TestCase):
         db = RexDB('if', ("integer", "float"), 20, 2)
         times = []
         for i in range(20):
-            times.append(time.localtime())
+            times.append(time.gmtime())
             db.log((i, random.random()))
             time.sleep(1)
 
@@ -41,7 +41,7 @@ class QueryTests(fake_filesystem_unittest.TestCase):
         times = []
         # log some stuff
         for i in range(200):
-            times.append(time.localtime())
+            times.append(time.gmtime())
             boolval = True if random.random() < 0.5 else False
             db.log((i, random.random(), random.random() * 10, boolval, i * 10000))
             time.sleep(0.5)
@@ -67,7 +67,7 @@ class QueryTests(fake_filesystem_unittest.TestCase):
         times = []
         data_entries = []
         for i in range(20):
-            times.append(time.localtime())
+            times.append(time.gmtime())
             data = (i, random.random())
             data_entries.append(data)
             db.log(data)
@@ -83,7 +83,7 @@ class QueryTests(fake_filesystem_unittest.TestCase):
         times = []
         # log some stuff
         for i in range(20):
-            times.append(time.localtime())
+            times.append(time.gmtime())
             boolval = True if random.random() < 0.5 else False
             db.log((i, random.random(), random.random() * 10, boolval, i * 10000))
             time.sleep(2)
