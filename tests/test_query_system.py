@@ -19,24 +19,24 @@ class QueryTests(fake_filesystem_unittest.TestCase):
             self.time.sleep(1)
 
         filepath0 = db._file_manager.location_from_time(time.mktime(times[0]))
-        self.assertEqual(filepath0, "db_0/1/1.001.db")
+        self.assertEqual(filepath0, "db_0/1/00001.db")
 
         filepath1 = db._file_manager.location_from_time(time.mktime(times[1]))
-        self.assertEqual(filepath1, "db_0/1/1.001.db")
+        self.assertEqual(filepath1, "db_0/1/00001.db")
 
         filepath2 = db._file_manager.location_from_time(time.mktime(times[2]))
-        self.assertEqual(filepath2, "db_0/1/1.002.db")
+        self.assertEqual(filepath2, "db_0/1/00002.db")
 
         filepath3 = db._file_manager.location_from_time(time.mktime(times[3]))
-        self.assertEqual(filepath3, "db_0/1/1.002.db")
+        self.assertEqual(filepath3, "db_0/1/00002.db")
 
         filepath4 = db._file_manager.location_from_time(time.mktime(times[10]))
         print(filepath4)
-        self.assertEqual(filepath4, "db_0/3/3.002.db")
+        self.assertEqual(filepath4, "db_0/3/00002.db")
 
         filepath5 = db._file_manager.location_from_time(time.mktime(times[13]))
         print(filepath5)
-        self.assertEqual(filepath5, "db_0/4/4.001.db")
+        self.assertEqual(filepath5, "db_0/4/00001.db")
 
     def test_file_path_2(self):
         db = RexDB('idf?Q', ("index", "b/t 0 and 1", "b/t 0 and 10", "bool", "index * 10000"),
@@ -51,19 +51,19 @@ class QueryTests(fake_filesystem_unittest.TestCase):
 
         # test returned filepaths
         filepath = db._file_manager.location_from_time(time.mktime(times[5]))
-        self.assertEqual(filepath, "db_0/1/1.001.db")
+        self.assertEqual(filepath, "db_0/1/00001.db")
 
         filepath = db._file_manager.location_from_time(time.mktime(times[50]))
-        self.assertEqual(filepath, "db_0/1/1.002.db")
+        self.assertEqual(filepath, "db_0/1/00002.db")
 
         filepath = db._file_manager.location_from_time(time.mktime(times[100]))
-        self.assertEqual(filepath, "db_0/1/1.003.db")
+        self.assertEqual(filepath, "db_0/1/00003.db")
 
         filepath = db._file_manager.location_from_time(time.mktime(times[150]))
-        self.assertEqual(filepath, "db_0/1/1.005.db")
+        self.assertEqual(filepath, "db_0/1/00005.db")
 
         filepath = db._file_manager.location_from_time(time.mktime(times[199]))
-        self.assertEqual(filepath, "db_0/1/1.006.db")
+        self.assertEqual(filepath, "db_0/1/00006.db")
 
     def test_data_1(self):
         db = RexDB('if', ("integer", "float"), 20, 2, time_method=self.time.gmtime)
