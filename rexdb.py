@@ -319,34 +319,28 @@ class FileManager:
         # finding folder from DB_map
         try:
             with open(self.db_map, "rb") as fd:
-                contents = fd.read()
-                if len(contents) != 0:
-                    lines = int(len(contents) / 12)
-                    for i in range(lines):
-                        (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start_time <= t and t < end_time):
-                            folder = num
-                            found_folder = True
-                            break
-                    if not found_folder:
-                        folder = self.folders
+                while (data := fd.read(12)) and len(data) == 12:
+                    (start_time, end_time, num) = struct.unpack("iii", data)
+                    if (start_time <= t and t < end_time):
+                        folder = num
+                        found_folder = True
+                        break
+                if not found_folder:
+                    folder = self.folders
         except Exception as e:
             print(f"couldn't access db map: {e}")
 
         # finding file from folder_map
         try:
             with open(f"db_{self.db_num}/{folder}/{folder}.map", "rb") as fd:
-                contents = fd.read()
-                if len(contents) != 0:
-                    lines = int(len(contents) / 12)
-                    for i in range(lines):
-                        (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start_time <= t and t < end_time):
-                            file = num
-                            found_file = True
-                            break
-                    if not found_file:
-                        file = self.files
+                while (data := fd.read(12)) and len(data) == 12:
+                    (start_time, end_time, num) = struct.unpack("iii", data)
+                    if (start_time <= t and t < end_time):
+                        file = num
+                        found_file = True
+                        break
+                if not found_file:
+                    file = self.files
         except Exception as e:
             print(f"couldn't access folder map: {e}")
 
@@ -359,18 +353,15 @@ class FileManager:
 
         try:
             with open(self.db_map, "rb") as fd:
-                contents = fd.read()
-                if len(contents) != 0:
-                    lines = int(len(contents) / 12)
-                    for i in range(lines):
-                        (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                        if (start <= start_time and start_time <= end or start <= end_time and end_time <= end):
-                            found_folder = True
-                            folders.append(num)
-                    if not found_folder:
-                        folders = [self.folders]
-                    if end_time <= end:
-                        folders.append(self.folders)
+                while (data := fd.read(12)) and len(data) == 12:
+                    (start_time, end_time, num) = struct.unpack("iii", data)
+                    if (start <= start_time <= end) or (start <= end_time <= end):
+                        found_folder = True
+                        folders.append(num)
+                if not found_folder:
+                    folders = [self.folders]
+                if end_time <= end:
+                    folders.append(self.folders)
         except Exception as e:
             print(f"couldn't access db map: {e}")
 
@@ -378,18 +369,15 @@ class FileManager:
         for folder in folders:
             try:
                 with open(f"db_{self.db_num}/{folder}/{folder}.map", "rb") as fd:
-                    contents = fd.read()
-                    if len(contents) != 0:
-                        lines = int(len(contents) / 12)
-                        for i in range(lines):
-                            (start_time, end_time, num) = struct.unpack("iii", contents[i * 12: i * 12 + 12])
-                            if (start <= start_time and start_time <= end or start <= end_time and end_time <= end):
-                                found_file = True
-                                files.append(f"db_{self.db_num}/{folder}/{folder}.{num:03}.db")
-                        if not found_file:
-                            files = [f"db_{self.db_num}/{folder}/{folder}.{lines:03}.db"]
-                        if end_time <= end and folder == self.folders:
-                            files.append(f"db_{self.db_num}/{folder}/{folder}.{self.files:03}.db")
+                    while (data := fd.read(12)) and len(data) == 12:
+                        (start_time, end_time, num) = struct.unpack("iii", data)
+                        if (start <= start_time <= end) or (start <= end_time <= end):
+                            found_file = True
+                            files.append(f"db_{self.db_num}/{folder}/{folder}.{num:03}.db")
+                    if not found_file:
+                        files = [f"db_{self.db_num}/{folder}/{folder}.{self.files:03}.db"]
+                    if end_time <= end and folder == self.folders:
+                        files.append(f"db_{self.db_num}/{folder}/{folder}.{self.files:03}.db")
             except Exception as e:
                 print(f"couldn't access folder map for {folder}: {e}")
 
