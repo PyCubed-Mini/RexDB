@@ -1,7 +1,6 @@
 from pyfakefs import fake_filesystem_unittest
 
-from rexdb import RexDB
-from file_manager import FileManager
+from rexdb import RexDB, FileManager
 
 
 class FileManagerTest(fake_filesystem_unittest.TestCase):

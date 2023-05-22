@@ -1,7 +1,6 @@
 from pyfakefs import fake_filesystem_unittest
 
-from rexdb import RexDB
-from dense_packer import DensePacker
+from rexdb import RexDB, DensePacker
 
 
 class DensePacketTest(fake_filesystem_unittest.TestCase):
