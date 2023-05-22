@@ -1,9 +1,4 @@
-import struct
 import time
-try:
-    from ucollections import namedtuple
-except ImportError:
-    from collections import namedtuple
 from src.dense_packer import DensePacker
 from src.file_manager import FileManager
 
@@ -13,41 +8,6 @@ VERSION_BYTE = 0x00
 UNSIGNED_CHAR = 'B'
 UNSIGNED_LONG_LONG = 'Q'
 FLOAT = 'f'
-
-
-def unpack_one(fstring, data):
-    """Unpack a single line of data"""
-    data = struct.unpack(f'<{fstring}', data)
-    return data[0]
-
-
-Header = namedtuple("Header", ("version", "start_date", "end_date", "fstring"))
-
-
-def read_header(file: str) -> Header:
-    """read_header(file: str) -> Header
-
-    Read the header of a database file
-
-    The format of a header is:
-    | Version | Start date | End data/incomplete | Format string length | Format string |
-    | 1 byte  |  8 bytes   | 8 byte              | 1 byte               | n bytes       |
-    Max length of format string is 256 bytes
-    """
-    with open(file, "rb") as f:
-        version = unpack_one(UNSIGNED_CHAR, f.read(1))
-        assert (version == VERSION_BYTE)
-        (start_date, end_date, fstring_len) = struct.unpack(
-            f'<{FLOAT}{FLOAT}{UNSIGNED_CHAR}',
-            f.read(4+4+1))
-        print(version, start_date, end_date, fstring_len)
-        fstring = unpack_one(f"{fstring_len}s", f.read(fstring_len))
-        return Header(version, start_date, end_date, fstring)
-
-
-def header_to_bytes(header: Header) -> bytes:
-    return struct.pack(f"<{UNSIGNED_CHAR}{FLOAT}{FLOAT}{UNSIGNED_CHAR}{len(header.fstring)}s",
-                       header.version, header.start_date, header.end_date, len(header.fstring), header.fstring)
 
 
 class RexDB:

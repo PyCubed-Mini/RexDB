@@ -1,10 +1,6 @@
 import struct
 import os
 from src.dense_packer import DensePacker
-try:
-    from ucollections import namedtuple
-except ImportError:
-    from collections import namedtuple
 
 VERSION = "0.0.1"
 VERSION_BYTE = 0x00
@@ -12,8 +8,6 @@ VERSION_BYTE = 0x00
 UNSIGNED_CHAR = 'B'
 UNSIGNED_LONG_LONG = 'Q'
 FLOAT = 'f'
-
-Header = namedtuple("Header", ("version", "start_date", "end_date", "fstring"))
 
 
 class FileManager:
@@ -77,16 +71,6 @@ class FileManager:
                 fd.write(data)
         except Exception as e:
             print(f"failed to create db info: {e}")
-
-    def map_start_entry(self, start_date):
-        '''
-        create_header: start_date -> None
-        Creates a header for a new file given the first line of data
-        for that file
-        '''
-        with open(self.current_map, "ab") as file:
-            file.write()
-        return Header(VERSION_BYTE, start_date, 0, bytes(self.fstring, 'utf-8'))
 
     def write_file(self, bytes_data: bytes) -> bool:
         '''
