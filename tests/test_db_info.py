@@ -1,6 +1,6 @@
 from pyfakefs import fake_filesystem_unittest
 import struct
-from rexdb import FileManager
+from file_manager import FileManager
 
 
 class DbInfoTest(fake_filesystem_unittest.TestCase):

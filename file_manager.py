@@ -1,7 +1,6 @@
 import os
 import struct
-from dense_packer import make_format
-from dense_packer import calc_fstring_size
+from dense_packer import DensePacker
 try:
     from ucollections import namedtuple
 except ImportError:
@@ -24,8 +23,8 @@ class FileManager:
         self.bytes_per_file = bytes_per_file
         self.db_num = 0
         self.fstring = fstring
-        self.dense_fstring = make_format(self.fstring)
-        self.fstring_size = calc_fstring_size(self.fstring)
+        self.dense_fstring = DensePacker.make_format(self.fstring)
+        self.fstring_size = DensePacker.calc_fstring_size(self.fstring)
         self.lines_per_file = (self.bytes_per_file // self.fstring_size) + 1
         self.files_per_folder = files_per_folder
         self.folders = 0
