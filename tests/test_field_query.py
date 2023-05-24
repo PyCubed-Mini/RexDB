@@ -16,4 +16,6 @@ class QueryTests(fake_filesystem_unittest.TestCase):
 
         data = db.get_data_at_field_threshold("index", 40, 1)
 
-        self.assertEqual(data[0][1], 41)
+        self.assertEqual(len(data), 9)
+        for i in range(9):
+            self.assertEqual(data[i][1], 41 + i)
