@@ -6,6 +6,9 @@ A very simple Python database with time as the primary method of querying.
 - [Overview](#how-it-works)
 - [Methods](#methods)
   - [\_\_init\_\_](#constructor-init)
+  - [log](#log)
+  - [get_data_at_time](#get_data_at_time)
+  - [get_data_at_range](#get_data_at_range)
 ## How it works.
 
 rexDB works in a very straightforward manner. It works through the operating system file structure. The database is stored in a directory called db\_\<number\>, this is so that multiple databases could be stored in the same directory. inside the database folder is another set of folders and within those folders are the files that contain your entries. However, these files are unreadable as they are just structs packed into bytes.
