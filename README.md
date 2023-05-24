@@ -2,6 +2,10 @@
 
 A very simple Python database with time as the primary method of querying.
 
+## table of contents
+- [overview](#how-it-works)
+- [methods](#methods)
+  - [__init__](#constructor-init)
 ## How it works.
 
 rexDB works in a very straightforward manner. It works through the operating system file structure. The database is stored in a directory called db\_<number>, this is so that multiple databases could be stored in the same directory. inside the database folder is another set of folders and within those folders are the files that contain your entries. However, these files are unreadable as they are just structs packed into bytes.
@@ -39,3 +43,20 @@ Each folder has a special file called a map, this map stores the start and end t
   - Because of the use of the time.struct\_time datatype, timestamps will only have precision down to the nearest second, if your application requires more precision than that do not use this database.
 
 This function will initialize an empty database that you can then use to store your entries. 
+
+### log
+
+**type**
+tuple -> bool
+
+**arguments**
+
+- data
+  - tuple
+  - a tuple containing the data you want to log in the database
+  - the tuple must be entered in the same order you specified in your format string and field names
+  - if you are storing characters or strings, you must use a 'b' string to specify that it is a byte string or convert it to bytes using the builtin Python "bytes" function and utf-8 encoding.
+
+**functionality**
+
+Will log your data in the database and mark it with an automatically generated time stamp. You will be able to query on this timestamp later. The function will return <True> if logging was successful and <False> otherwise. 
