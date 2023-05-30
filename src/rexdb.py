@@ -26,9 +26,9 @@ class RexDB:
         self._file_manager.start_db_entry(self._prev_timestamp)
         self._file_manager.start_folder_entry(self._prev_timestamp)
 
-    def log(self, data) -> None:
+    def log(self, data) -> bool:
         """
-        log: bytes -> None
+        log: bytes -> bool
         logs the data given into the correct folder and file. Also handles when new
         folders and files need to be created.
         """
@@ -50,9 +50,10 @@ class RexDB:
             self._cursor = 0
 
         data_bytes = self._packer.pack((self._timestamp, *data))
-        self._file_manager.write_file(data_bytes)
+        success = self._file_manager.write_file(data_bytes)
         self._cursor += 1
         self._prev_timestamp = self._timestamp
+        return success
 
     def nth(self, n):
         with open(self._file_manager.current_file, "rb") as fd:
