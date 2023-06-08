@@ -56,6 +56,10 @@ class RexDB:
         self._prev_timestamp = self._timestamp
         return success
 
+    @staticmethod
+    def int_cmp(x, y):
+        return (x > y) - (x < y)
+
     def nth(self, n):
         with open(self._file_manager.current_file, "rb") as fd:
             fd.seek(n*self._packer.line_size)
@@ -119,6 +123,66 @@ class RexDB:
                         raw_data = file.read(self._packer.line_size)
                         data = self._packer.unpack(raw_data)
                         if (start <= data[0] and data[0] <= end):
+                            entries.append(data)
+            except Exception as e:
+                print(f"could not search file: {e}")
+
+        return entries
+
+    def get_data_at_field_threshold(self, field: str, threshold, goal, cmp_fn=int_cmp, start_time=None, end_time=None):
+        """
+        string * 'a * ('a * 'a -> ORDER) * struct_time * struct_time -> list
+
+        field is a string and is the name of the field you want to query on.
+
+        Threshold is the value that you want to compare the data to and the
+        goal is if you want the data to be less than, equal to, or greater
+        than your threshold. Threshold should be the same type as the data stored
+        in field, while goal should be -1, 0, or 1. -1 meaning less than, 0 meaning
+        equal to, 1 meaning greater than.
+
+        cmp_fn is an optional field. It is the comparison function you are using
+        to compare your threshold with the data stored in the database. The default
+        is an integer comparison function.
+
+        the start_time and end_time fields are optional fields to limit your search
+        to a specific time range.
+
+        The complexity of this function if O(n). This function does not benefit from
+        the speed increase that the map files provide.
+        """
+
+        entries = []
+        filepaths = []
+        # get files to search
+        if start_time and end_time:
+            # If start and end times were specified only search files that fall within that range.
+            start = time.mktime(start_time)
+            end = time.mktime(end_time)
+        elif start_time:
+            # if only start time specified search from start time to now
+            start = time.mktime(start_time)
+            end = time.mktime(self._timer_function())
+        else:
+            # if neither are specified search from the database's start to now
+            start = time.mktime(self._init_time)
+            end = time.mktime(self._timer_function())
+
+        filepaths = self._file_manager.locations_from_range(start, end)
+        # get the correct field index for comparison
+        for i, f in enumerate(self._field_names):
+            if field.lower() == f.lower():
+                field_index = i
+
+        # access every file
+        for filepath in filepaths:
+            try:
+                with open(filepath, "rb") as file:
+                    for _ in range(self._file_manager.lines_per_file):
+                        raw_data = file.read(self._packer.line_size)
+                        data = self._packer.unpack(raw_data)
+                        # compare entry and threshold and see if they match the goal
+                        if (cmp_fn(data[field_index], threshold) == goal):
                             entries.append(data)
             except Exception as e:
                 print(f"could not search file: {e}")
