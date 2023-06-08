@@ -30,7 +30,8 @@ class RexDB:
         """
         log: bytes -> bool
         logs the data given into the correct folder and file. Also handles when new
-        folders and files need to be created.
+        folders and files need to be created. Returns True if the data was
+        successfully logged, False otherwise.
         """
         self._timestamp = (int)(time.mktime(self._timer_function()))
 
