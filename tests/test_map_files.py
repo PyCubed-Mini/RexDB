@@ -1,5 +1,5 @@
 from pyfakefs import fake_filesystem_unittest
-from rexdb import RexDB
+from src.rexdb import RexDB
 import struct
 from tests.faketime import FakeTime
 

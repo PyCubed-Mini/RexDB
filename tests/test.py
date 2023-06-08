@@ -1,6 +1,6 @@
 from pyfakefs import fake_filesystem_unittest
 
-from rexdb import RexDB
+from src.rexdb import RexDB
 
 
 class TestExample(fake_filesystem_unittest.TestCase):
