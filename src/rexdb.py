@@ -18,8 +18,8 @@ class RexDB:
         self._field_names = ("timestamp", *field_names)
         self._cursor = cursor
         self._timer_function = time_method
-        self._init_time = time.mktime(self._timer_function())
-        self._prev_timestamp = self._init_time
+        self._init_time = self._timer_function()
+        self._prev_timestamp = time.mktime(self._init_time)
         self._timestamp = 0
         self._file_manager = FileManager(
             "i" + fstring, self._field_names, bytes_per_file, files_per_folder)
