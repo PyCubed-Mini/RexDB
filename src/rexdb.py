@@ -90,7 +90,7 @@ class RexDB:
         """
         tfloat = time.mktime(t)
         filepath = self._file_manager.location_from_time(tfloat)
-        if tfloat < self._init_time:
+        if tfloat < time.mktime(self._init_time):
             raise ValueError("time is before database init time")
         try:
             with open(filepath, "rb") as fd:
