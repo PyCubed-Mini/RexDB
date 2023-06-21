@@ -56,25 +56,6 @@ class RexDB:
         self._prev_timestamp = self._timestamp
         return success
 
-    def nth(self, n):
-        with open(self._file_manager.current_file, "rb") as fd:
-            fd.seek(n*self._packer.line_size)
-            line = fd.read(self._packer.line_size)
-            return self._packer.unpack(line)[1:]
-
-    def col(self, i):
-        data = []
-        with open(self._file_manager.current_file, "rb") as fd:
-            fd.seek(0)
-            for _ in range(self._packer.line_size):
-                line = fd.read(self._packer.line_size)
-                print(line)
-                if len(line) != self._packer.line_size:
-                    break
-                line = self._packer.unpack(line)
-                data.append(line[i])
-        return data[self._cursor:] + data[:self._cursor]
-
     def get_data_at_time(self, t: time.struct_time):
         """
         struct_time -> tuple
