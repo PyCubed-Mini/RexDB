@@ -129,7 +129,13 @@ class RexDB:
 
         return entries
 
-    def get_data_at_field_threshold(self, field: str, threshold, goal, cmp_fn=int_cmp, start_time=None, end_time=None):
+    def get_data_at_field_threshold(self,
+                                    field: str,
+                                    threshold,
+                                    goal,
+                                    cmp_fn=int_cmp,
+                                    start_time=None,
+                                    end_time=None):
         """
         string * 'a * ('a * 'a -> ORDER) * struct_time * struct_time -> list
 
