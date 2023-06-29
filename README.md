@@ -3,12 +3,15 @@
 A very simple Python database with time as the primary method of querying.
 
 ## table of contents
-- [Overview](#how-it-works)
-- [Methods](#methods)
-  - [\_\_init\_\_](#constructor-init)
-  - [log](#log)
-  - [get_data_at_time](#get_data_at_time)
-  - [get_data_at_range](#get_data_at_range)
+- [RexDB](#rexdb)
+  - [table of contents](#table-of-contents)
+  - [How it works.](#how-it-works)
+  - [Methods](#methods)
+    - [**Constructor** (\_\_init\_\_)](#constructor-__init__)
+    - [**log**](#log)
+    - [**get\_data\_at\_time**](#get_data_at_time)
+    - [**get\_data\_at\_range**](#get_data_at_range)
+    - [**get\_data\_at\_field\_threshold**](#get_data_at_field_threshold)
 ## How it works.
 
 RexDB works in a very straightforward manner. It works through the operating system file structure. The database is stored in a directory called db\_\<number\>, this is so that multiple databases could be stored in the same directory. inside the database folder is another set of folders and within those folders are the files that contain your entries. However, these files are unreadable as they are just structs packed into bytes.
@@ -80,7 +83,7 @@ Will log your data in the database and mark it with an automatically generated t
 <u>arguments</u>
 
 - time
-  - time.struct_time
+  - `time.struct_time`
   - the time of the entry which you want to retrieve. 
 
 <u>functionality</u>
@@ -96,12 +99,40 @@ Given a time, this function will return the data entry logged at that time. If t
 <u>arguments</u>
 
 - start_time
-  - time.struct_time
+  - `time.struct_time`
   - the start of your specified range
 - end_time
-  - time.struct_time
+  - `time.struct_time`
   - the end of your specified range
 
 <u>functionality</u>
 
 Will return all entries within a specified time range, if there are no entries within the specified range, will return an empty list.
+
+### **get_data_at_field_threshold**
+
+<u>type</u>
+
+- `str * 'a * int set -> ('a * 'a -> {-1, 0, 1}) -> time.struct_time -> time.struct_time`
+
+<u>arguments</u>
+
+- field
+  - `str`
+  - the field name you are querying on
+- theshold
+  - `'a`
+  - the cutoff you are using
+- goal
+  - The integers used in this set should be -1, 0, 1.
+  - -1 corresponds to less than, 0 corresponds to equal to, 1 corresponds to greater than. put in your set each operation you would like to include.
+- cmp_fn
+  - `'a * 'a -> {-1, 0, 1}`
+  - the comparison function you will use
+  - must return some integer x in the set {-1, 0, 1}
+- start_time
+  - time.struct_time
+  - when you want to start looking
+- end_time
+  - time.struct_time
+  - when you want to end looking
