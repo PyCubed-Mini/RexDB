@@ -137,19 +137,27 @@ class RexDB:
                                     start_time=None,
                                     end_time=None):
         """
-        string * 'a * ('a * 'a -> ORDER) * struct_time * struct_time -> list
+        string * 'a * int set * ('a * 'a -> ORDER) * struct_time * struct_time -> list
 
-        field is a string and is the name of the field you want to query on.
+        field
+        - str
+        - is a string and is the name of the field you want to query on.
 
-        Threshold is the value that you want to compare the data to and the
-        goal is if you want the data to be less than, equal to, or greater
-        than your threshold. Threshold should be the same type as the data stored
-        in field, while goal should be -1, 0, or 1. -1 meaning less than, 0 meaning
-        equal to, 1 meaning greater than.
+        Threshold:
+        - 'a
+        - is the value that you want to compare the data to
 
-        cmp_fn is an optional field. It is the comparison function you are using
-        to compare your threshold with the data stored in the database. The default
-        is an integer comparison function.
+        goal:
+        - any subset of {-1, 0, 1}
+        - The integers used in this set should be -1, 0, 1.
+        - -1 corresponds to less than, 0 corresponds to equal to, 1 corresponds to
+          greater that. put in your set each operation you would like to include.
+
+        cmp_fn:
+        - 'a * 'a -> (some x in the set {-1, 0, 1})
+        - is an optional field. It is the comparison function you are using
+          to compare your threshold with the data stored in the database. The default
+          is an integer comparison function.
 
         the start_time and end_time fields are optional fields to limit your search
         to a specific time range.
@@ -188,7 +196,7 @@ class RexDB:
                         raw_data = file.read(self._packer.line_size)
                         data = self._packer.unpack(raw_data)
                         # compare entry and threshold and see if they match the goal
-                        if (cmp_fn(data[field_index], threshold) == goal):
+                        if (cmp_fn(data[field_index], threshold) in goal):
                             entries.append(data)
             except Exception as e:
                 print(f"could not search file: {e}")
