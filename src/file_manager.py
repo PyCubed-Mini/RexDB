@@ -12,7 +12,7 @@ FLOAT = 'f'
 
 class FileManager:
     def __init__(self, fstring: str, field_names: tuple,
-                 bytes_per_file: int = 1000, files_per_folder: int = 100) -> None:
+                 bytes_per_file: int, files_per_folder: int) -> None:
         self.bytes_per_file = bytes_per_file
         self.db_num = 0
         self.fstring = fstring
@@ -58,14 +58,15 @@ class FileManager:
         for all field names.
         '''
         field_names = self.fields
-        self.info_format = f"Bi{len(self.fstring)}s{len(self.fstring)}s"
+        self.info_format = f"iiBi{len(self.fstring)}s{len(self.fstring)}s"
         fields = ()
         for field in field_names:
             fields = fields + (len(field), bytes(field, 'utf-8'))
             self.info_format += f"i{len(field)}s"
 
-        data = struct.pack(self.info_format, VERSION_BYTE, len(self.fstring), bytes(
-            self.fstring, 'utf-8'), bytes(self.dense_fstring, 'utf-8'), *fields)
+        data = struct.pack(self.info_format, self.bytes_per_file, self.files_per_folder,
+                           VERSION_BYTE, len(self.fstring), bytes(self.fstring, 'utf-8'),
+                           bytes(self.dense_fstring, 'utf-8'), *fields)
         try:
             with open(self.db_info, "wb") as fd:
                 fd.write(data)
