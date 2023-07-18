@@ -31,11 +31,9 @@ class QueryTests(fake_filesystem_unittest.TestCase):
         self.assertEqual(filepath3, "db_0/1/00002.db")
 
         filepath4 = db._file_manager.location_from_time(time.mktime(times[10]))
-        print(filepath4)
         self.assertEqual(filepath4, "db_0/3/00002.db")
 
         filepath5 = db._file_manager.location_from_time(time.mktime(times[13]))
-        print(filepath5)
         self.assertEqual(filepath5, "db_0/4/00001.db")
 
     def test_file_path_2(self):
