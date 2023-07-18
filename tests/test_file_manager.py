@@ -9,7 +9,7 @@ class FileManagerTest(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     def testFileManager(self):
-        filemanager = FileManager('icfc', ("int", "char", "float", "char2"), 2, 0)
+        filemanager = FileManager('icfc', ("int", "char", "float", "char2"), 2, 0, 90)
 
         assert (filemanager.fstring_size == 10)
         assert (filemanager.lines_per_file == 1)

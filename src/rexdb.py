@@ -21,8 +21,9 @@ class RexDB:
         self._init_time = time.mktime(self._timer_function())
         self._prev_timestamp = self._init_time
         self._timestamp = 0
-        self._file_manager = FileManager(
-            "i" + fstring, self._field_names, bytes_per_file, files_per_folder)
+        self._file_manager = FileManager("i" + fstring, self._field_names,
+                                         bytes_per_file, files_per_folder,
+                                         int(self._init_time))
         self._file_manager.start_db_entry(self._prev_timestamp)
         self._file_manager.start_folder_entry(self._prev_timestamp)
 

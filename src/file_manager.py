@@ -33,6 +33,8 @@ class FileManager:
         """
         length = len(data)
         index = 0
+        init_time = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
+        index += 4
         bytes_per_file = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
         index += 4
         files_per_folder = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + data[index + 0]
@@ -61,10 +63,11 @@ class FileManager:
             fields += (string,)
             index += field_len
             index += ((4 - (index % 4)) % 4)
-        return bytes_per_file, files_per_folder, version_byte, fstring_size, fstring, dense_fstring, fields
+        return init_time, bytes_per_file, files_per_folder, version_byte, fstring_size, fstring, dense_fstring, fields
 
     def __init__(self, fstring: str, field_names: tuple,
-                 bytes_per_file: int, files_per_folder: int) -> None:
+                 bytes_per_file: int, files_per_folder: int,
+                 init_time) -> None:
         self.bytes_per_file = bytes_per_file
         self.db_num = 0
         self.fstring = fstring
@@ -72,6 +75,7 @@ class FileManager:
         self.fstring_size = DensePacker.calc_fstring_size(self.fstring)
         self.lines_per_file = (self.bytes_per_file // self.fstring_size) + 1
         self.files_per_folder = files_per_folder
+        self.init_time = init_time
         self.folders = 0
         self.files = 0
         self.fields = field_names
@@ -110,13 +114,13 @@ class FileManager:
         for all field names.
         '''
         field_names = self.fields
-        self.info_format = f"iiBi{len(self.fstring)}s{len(self.fstring)}s"
+        self.info_format = f"iiiBi{len(self.fstring)}s{len(self.fstring)}s"
         fields = ()
         for field in field_names:
             fields = fields + (len(field), bytes(field, 'utf-8'))
             self.info_format += f"i{len(field)}s"
 
-        data = struct.pack(self.info_format, self.bytes_per_file, self.files_per_folder,
+        data = struct.pack(self.info_format, self.init_time, self.bytes_per_file, self.files_per_folder,
                            VERSION_BYTE, len(self.fstring), bytes(self.fstring, 'utf-8'),
                            bytes(self.dense_fstring, 'utf-8'), *fields)
         try:
