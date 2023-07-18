@@ -11,6 +11,58 @@ FLOAT = 'f'
 
 
 class FileManager:
+    """
+    Deals with reading and writing to the files. 
+    """
+
+    @staticmethod
+    def unpack_db_info(data: bytes, is64Bit: bool = False, isBigEndian: bool = False):
+        """
+        unpack_db_info: bytes -> tuple
+        32 bit processors have a 4 byte cycle, while 64 bit process have an 8 byte cycle (clearly)
+        however, this will not impact getting info data as no field we use is greater than 4 bytes,
+        so at worst, everything will be aligned in 4 byte increments
+
+        we know that the format for data excluding the field names will be:
+        int, int, bool, int, string, int, string
+        and the field names will be int then string for however many field names there are
+
+        2 ints will not leave any padding
+
+        version byte has 3 bytes of padding beforehand
+        """
+        length = len(data)
+        index = 0
+        bytes_per_file = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
+        index += 4
+        files_per_folder = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + data[index + 0]
+        index += 4
+        version_byte = data[index + 3]
+        index += 4
+        fstring_size = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
+        index += 4
+        fstring = ""
+        for i in range(fstring_size):
+            fstring += chr(data[index + i])
+        index += fstring_size
+        dense_fstring = ""
+        for i in range(fstring_size):
+            dense_fstring += chr(data[index + i])
+        index += fstring_size + (4 - ((fstring_size * 2) % 4))
+
+        fields = ()
+        while index < length:
+            # print(index)
+            field_len = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
+            index += 4
+            string = ""
+            for i in range(field_len):
+                string += chr(data[index + i])
+            fields += (string,)
+            index += field_len
+            index += ((4 - (index % 4)) % 4)
+        return bytes_per_file, files_per_folder, version_byte, fstring_size, fstring, dense_fstring, fields
+
     def __init__(self, fstring: str, field_names: tuple,
                  bytes_per_file: int, files_per_folder: int) -> None:
         self.bytes_per_file = bytes_per_file
