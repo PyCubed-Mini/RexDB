@@ -54,7 +54,6 @@ class FileManager:
 
         fields = ()
         while index < length:
-            # print(index)
             field_len = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
             index += 4
             string = ""
@@ -65,9 +64,8 @@ class FileManager:
             index += ((4 - (index % 4)) % 4)
         return init_time, bytes_per_file, files_per_folder, version_byte, fstring_size, fstring, dense_fstring, fields
 
-    def __init__(self, fstring: str, field_names: tuple,
-                 bytes_per_file: int, files_per_folder: int,
-                 init_time) -> None:
+    def __init__(self, fstring: str, field_names: tuple, bytes_per_file: int,
+                 files_per_folder: int, init_time: int, filepath: str) -> None:
         self.bytes_per_file = bytes_per_file
         self.db_num = 0
         self.fstring = fstring
@@ -79,8 +77,10 @@ class FileManager:
         self.folders = 0
         self.files = 0
         self.fields = field_names
-        self.db_map = f"db_{self.db_num}/db_map.map"
-        self.db_info = f"db_{self.db_num}/db_info.info"
+        self.in_filepath = filepath
+        self.filepath = f"{self.in_filepath}db_{self.db_num}"
+        self.db_map = f"{self.filepath}/db_map.map"
+        self.db_info = f"{self.filepath}/db_info.info"
         self.setup()
 
     def setup(self):
@@ -88,7 +88,8 @@ class FileManager:
         runs all setup functions that are needed to create the file structure
         """
         try:
-            os.mkdir(f"db_{self.db_num}")
+            self.filepath = f"{self.in_filepath}db_{self.db_num}"
+            os.mkdir(self.filepath)
             self.create_db_map()
             self.create_new_folder()
             self.create_new_file()
@@ -150,7 +151,7 @@ class FileManager:
         count as the name. Writes the header to the new file.
         '''
         self.files += 1
-        self.current_file = f'db_{self.db_num}/{self.folders}/{self.files:05}.db'
+        self.current_file = f'{self.filepath}/{self.folders}/{self.files:05}.db'
 
     def create_new_folder(self) -> bool:
         '''
@@ -161,9 +162,9 @@ class FileManager:
         self.files = 0
         self.folders += 1
         try:
-            os.mkdir(f'db_{self.db_num}/{self.folders}')
-            self.current_file = f'db_{self.db_num}/{self.folders}/{self.files:05}.db'
-            self.current_map = f'db_{self.db_num}/{self.folders}/.map'
+            os.mkdir(f'{self.filepath}/{self.folders}')
+            self.current_file = f'{self.filepath}/{self.folders}/{self.files:05}.db'
+            self.current_map = f'{self.filepath}/{self.folders}/.map'
             try:
                 open(self.current_map, "wb")
             except Exception as e:
@@ -250,7 +251,7 @@ class FileManager:
 
         # finding file from folder_map
         try:
-            with open(f"db_{self.db_num}/{folder}/.map", "rb") as fd:
+            with open(f"{self.filepath}/{folder}/.map", "rb") as fd:
                 while (data := fd.read(12)) and len(data) == 12:
                     (start_time, end_time, num) = struct.unpack("iii", data)
                     if (start_time <= t and t < end_time):
@@ -262,7 +263,7 @@ class FileManager:
         except Exception as e:
             print(f"couldn't access folder map: {e}")
 
-        return f"db_{self.db_num}/{folder}/{file:05}.db"
+        return f"{self.filepath}/{folder}/{file:05}.db"
 
     def locations_from_range(self, start: float, end: float):
         folders = []
@@ -286,16 +287,16 @@ class FileManager:
         found_file = True
         for folder in folders:
             try:
-                with open(f"db_{self.db_num}/{folder}/.map", "rb") as fd:
+                with open(f"{self.filepath}/{folder}/.map", "rb") as fd:
                     while (data := fd.read(12)) and len(data) == 12:
                         (start_time, end_time, num) = struct.unpack("iii", data)
                         if (start <= start_time <= end) or (start <= end_time <= end):
                             found_file = True
-                            files.append(f"db_{self.db_num}/{folder}/{num:05}.db")
+                            files.append(f"{self.filepath}/{folder}/{num:05}.db")
                     if not found_file:
-                        files = [f"db_{self.db_num}/{folder}/{self.files:05}.db"]
+                        files = [f"{self.filepath}/{folder}/{self.files:05}.db"]
                     if end_time <= end and folder == self.folders:
-                        files.append(f"db_{self.db_num}/{folder}/{self.files:05}.db")
+                        files.append(f"{self.filepath}/{folder}/{self.files:05}.db")
             except Exception as e:
                 print(f"couldn't access folder map for {folder}: {e}")
 

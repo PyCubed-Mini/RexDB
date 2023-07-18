@@ -12,7 +12,7 @@ FLOAT = 'f'
 
 class RexDB:
     def __init__(self, fstring, field_names: tuple, bytes_per_file=1024,
-                 files_per_folder=50, time_method=time.gmtime):
+                 files_per_folder=50, time_method=time.gmtime, filepath: str = ""):
         # add "i" as time will not be input by caller
         self._packer = DensePacker("i" + fstring)
         self._field_names = ("timestamp", *field_names)
@@ -21,11 +21,18 @@ class RexDB:
         self._init_time = time.mktime(self._timer_function())
         self._prev_timestamp = self._init_time
         self._timestamp = 0
+        if filepath != "":
+            self.check_filepath(filepath)
         self._file_manager = FileManager("i" + fstring, self._field_names,
                                          bytes_per_file, files_per_folder,
-                                         int(self._init_time))
+                                         int(self._init_time), filepath)
         self._file_manager.start_db_entry(self._prev_timestamp)
         self._file_manager.start_folder_entry(self._prev_timestamp)
+
+    def check_filepath(sef, filepath):
+        """last character of filepath should be '/' as to ensure the proper folder"""
+        if filepath[-1] != "/":
+            raise RuntimeError("filepath should end in '/'")
 
     def log(self, data) -> bool:
         """
@@ -69,7 +76,6 @@ class RexDB:
             fd.seek(0)
             for _ in range(self._packer.line_size):
                 line = fd.read(self._packer.line_size)
-                print(line)
                 if len(line) != self._packer.line_size:
                     break
                 line = self._packer.unpack(line)

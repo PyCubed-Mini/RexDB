@@ -60,6 +60,5 @@ class MapTests(fake_filesystem_unittest.TestCase):
                 self.assertEqual(dbdata1[0], log_1_timestamp)
                 self.assertEqual(dbdata1[1], log_5_timestamp)
                 self.assertEqual(dbdata1[2], 1)
-                print(fd.read())
         except Exception as e:
             raise RuntimeError(f"could not open databse map file: {e}")
