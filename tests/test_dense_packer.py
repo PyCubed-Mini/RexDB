@@ -14,7 +14,8 @@ class DensePacketTest(fake_filesystem_unittest.TestCase):
         db = RexDB('icfc', ("money", "volume", "letter", "area"), bytes_per_file=10, files_per_folder=2, filepath="sd/")
         self.assertEqual(db._packer.dense_fstring, "fiicc")
 
-        db = RexDB("cifh?c", ("money", "volume", "letter", "area"), bytes_per_file=10, files_per_folder=2, filepath="sd/")
+        db = RexDB("cifh?c", ("money", "volume", "letter", "area"),
+                   bytes_per_file=10, files_per_folder=2, filepath="sd/")
         self.assertEqual(db._packer.dense_fstring, "fiihcc?")
 
     def testEdgeCases(self):

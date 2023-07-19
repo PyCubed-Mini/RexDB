@@ -12,7 +12,7 @@ FLOAT = 'f'
 
 class FileManager:
     """
-    Deals with reading and writing to the files. 
+    Deals with reading and writing to the files.
     """
 
     @staticmethod
