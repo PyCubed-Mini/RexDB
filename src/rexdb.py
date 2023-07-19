@@ -1,7 +1,6 @@
 import time
 from src.dense_packer import DensePacker
 from src.file_manager import FileManager
-import os
 
 VERSION = "0.0.1"
 VERSION_BYTE = 0x00
