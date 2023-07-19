@@ -77,8 +77,7 @@ class FileManager:
         self.folders = 0
         self.files = 0
         self.fields = field_names
-        self.in_filepath = filepath
-        self.filepath = f"{self.in_filepath}db_{self.db_num}"
+        self.filepath = filepath
         self.db_map = f"{self.filepath}/db_map.map"
         self.db_info = f"{self.filepath}/db_info.info"
         self.setup()
@@ -88,15 +87,12 @@ class FileManager:
         runs all setup functions that are needed to create the file structure
         """
         try:
-            self.filepath = f"{self.in_filepath}db_{self.db_num}"
-            os.mkdir(self.filepath)
             self.create_db_map()
             self.create_new_folder()
             self.create_new_file()
             self.create_db_info()
         except FileExistsError:
-            self.db_num += 1
-            self.setup()
+            raise RuntimeError("database already exists in folder")
         except Exception as e:
             print(f"could not setup databse: {e}")
 

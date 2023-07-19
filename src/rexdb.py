@@ -1,6 +1,7 @@
 import time
 from src.dense_packer import DensePacker
 from src.file_manager import FileManager
+import os
 
 VERSION = "0.0.1"
 VERSION_BYTE = 0x00
@@ -12,7 +13,8 @@ FLOAT = 'f'
 
 class RexDB:
     def __init__(self, fstring, field_names: tuple, bytes_per_file=1024,
-                 files_per_folder=50, time_method=time.gmtime, filepath: str = ""):
+                 files_per_folder=50, time_method=time.gmtime, filepath: str = "",
+                 new_db: bool = True):
         # add "i" as time will not be input by caller
         self._packer = DensePacker("i" + fstring)
         self._field_names = ("timestamp", *field_names)
@@ -23,16 +25,15 @@ class RexDB:
         self._timestamp = 0
         if filepath != "":
             self.check_filepath(filepath)
-        self._file_manager = FileManager("i" + fstring, self._field_names,
-                                         bytes_per_file, files_per_folder,
-                                         int(self._init_time), filepath)
+        self._file_manager = FileManager("i" + fstring, self._field_names, bytes_per_file,
+                                         files_per_folder, int(self._init_time), filepath)
         self._file_manager.start_db_entry(self._prev_timestamp)
         self._file_manager.start_folder_entry(self._prev_timestamp)
 
     def check_filepath(sef, filepath):
         """last character of filepath should be '/' as to ensure the proper folder"""
-        if filepath[-1] != "/":
-            raise RuntimeError("filepath should end in '/'")
+        if filepath[-1] == "/":
+            raise RuntimeError("filepath should not end in '/'")
 
     def log(self, data) -> bool:
         """

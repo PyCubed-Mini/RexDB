@@ -41,7 +41,7 @@ class MapTests(fake_filesystem_unittest.TestCase):
 
         # correctness of folder 1 map
         try:
-            with open("db_0/1/.map", "rb") as fd:
+            with open("/1/.map", "rb") as fd:
                 data1 = struct.unpack("iii", fd.read(12))
                 self.assertEqual(data1[0], log_1_timestamp)
                 self.assertEqual(data1[1], log_3_timestamp)

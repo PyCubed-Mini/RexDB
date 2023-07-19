@@ -11,11 +11,13 @@ class DensePacketTest(fake_filesystem_unittest.TestCase):
     def testFormatter(self):
         os.mkdir("sd")
         # filemanager automatically adds a float to store Timestamp
-        db = RexDB('icfc', ("money", "volume", "letter", "area"), bytes_per_file=10, files_per_folder=2, filepath="sd/")
+        db = RexDB('icfc', ("money", "volume", "letter", "area"), bytes_per_file=10, files_per_folder=2, filepath="sd")
         self.assertEqual(db._packer.dense_fstring, "fiicc")
 
+    def testFormatter2(self):
+        os.mkdir("sd")
         db = RexDB("cifh?c", ("money", "volume", "letter", "area"),
-                   bytes_per_file=10, files_per_folder=2, filepath="sd/")
+                   bytes_per_file=10, files_per_folder=2, filepath="sd")
         self.assertEqual(db._packer.dense_fstring, "fiihcc?")
 
     def testEdgeCases(self):
