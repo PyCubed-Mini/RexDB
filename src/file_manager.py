@@ -103,14 +103,17 @@ class FileManager:
             print(f"could not setup databse: {e}")
 
     def read_setup(self):
-        with open(f"{self.filepath}/temp", "rb") as fd:
-            data = fd.read()
-        folders, files, folder_start_time, file_start_time = struct.unpack("iiii", data)
-        self.folders = folders
-        self.files = files
-        self.folder_start_time = folder_start_time
-        self.file_start_time = file_start_time
-        self.current_map = f"{self.filepath}/{self.folders}/.map"
+        try:
+            with open(f"{self.filepath}/temp", "rb") as fd:
+                data = fd.read()
+            folders, files, folder_start_time, file_start_time = struct.unpack("iiii", data)
+            self.folders = folders
+            self.files = files
+            self.folder_start_time = folder_start_time
+            self.file_start_time = file_start_time
+            self.current_map = f"{self.filepath}/{self.folders}/.map"
+        except Exception as e:
+            print(f"could not get existing database: {e}")
 
     def create_db_map(self):
         try:
