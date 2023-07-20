@@ -16,7 +16,7 @@ class FileManager:
     """
 
     @staticmethod
-    def unpack_db_info(data: bytes, is64Bit: bool = False, isBigEndian: bool = False):
+    def unpack_db_info(data: bytes, isBigEndian: bool = False):
         """
         unpack_db_info: bytes -> tuple
         32 bit processors have a 4 byte cycle, while 64 bit process have an 8 byte cycle (clearly)
@@ -50,7 +50,7 @@ class FileManager:
         dense_fstring = ""
         for i in range(fstring_size):
             dense_fstring += chr(data[index + i])
-        index += fstring_size + (4 - ((fstring_size * 2) % 4))
+        index += fstring_size + ((4 - ((fstring_size * 2) % 4)) % 4)
 
         fields = ()
         while index < length:
