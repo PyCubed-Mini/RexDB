@@ -15,37 +15,30 @@ class RexDB:
                  files_per_folder=50, time_method=time.gmtime, filepath: str = "",
                  new_db: bool = True):
         # add "i" as time will not be input by caller
+        self._timer_function = time_method
         if new_db:
-            self._packer = DensePacker("i" + fstring)
-            self._field_names = ("timestamp", *field_names)
-            self._cursor = 0
-            self._timer_function = time_method
-            self._init_time = time.mktime(self._timer_function())
-            self._prev_timestamp = self._init_time
-            self._timestamp = 0
+            f_string = "i" + fstring
+            init_time = time.mktime(self._timer_function())
+            field_names = ("timestamp", *field_names)
             if filepath != "":
                 self.check_filepath(filepath)
-            self._file_manager = FileManager("i" + fstring, self._field_names, bytes_per_file,
-                                             files_per_folder, int(self._init_time), filepath,
-                                             new_db)
-            # self._file_manager.start_db_entry(self._prev_timestamp)
-            # self._file_manager.start_folder_entry(self._prev_timestamp)
         else:
             with open(f"{filepath}/db_info.info", "rb") as file:
                 data = file.read()
             (init_time, bytes_per_file, files_per_folder,
-             VERSION_BYTE, fstring_length, fstring,
+             VERSION_BYTE, fstring_length, f_string,
              dense_fstring, field_names) = FileManager.unpack_db_info(data)
-            self._packer = DensePacker(fstring)
-            self._field_names = field_names
-            self._cursor = 0
-            self._timer_function = time_method
-            self._init_time = init_time
-            self._prev_timestamp = time.mktime(self._timer_function())
-            self._timestamp = int(self._prev_timestamp)
-            self._file_manager = FileManager(fstring, self._field_names, bytes_per_file,
-                                             files_per_folder, int(self._init_time), filepath,
-                                             new_db)
+
+        self._field_names = field_names
+        self._cursor = 0
+        self._init_time = init_time
+        self._prev_timestamp = time.mktime(self._timer_function())
+        self._timestamp = int(self._prev_timestamp)
+        self._packer = DensePacker(f_string)
+        self._file_manager = FileManager(f_string, self._field_names, bytes_per_file,
+                                         files_per_folder, int(self._init_time), filepath,
+                                         new_db)
+        if not new_db:
             self.hande_file_change()
 
     def check_filepath(sef, filepath):
