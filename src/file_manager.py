@@ -220,11 +220,11 @@ class FileManager:
         except Exception as e:
             print(f"could not write to folder map: {e}")
 
-    def start_db_entry(self, time):
+    def start_db_entry(self, t):
         """
         stores start time of file for later use to write to the map file
         """
-        self.folder_start_time = time
+        self.folder_start_time = t
         self.write_temp_data_file()
 
     def write_to_db_map(self, t):

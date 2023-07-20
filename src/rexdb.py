@@ -42,7 +42,7 @@ class RexDB:
             self._timer_function = time_method
             self._init_time = init_time
             self._prev_timestamp = time.mktime(self._timer_function())
-            self._timestamp = self._prev_timestamp
+            self._timestamp = int(self._prev_timestamp)
             self._file_manager = FileManager(fstring, self._field_names, bytes_per_file,
                                              files_per_folder, int(self._init_time), filepath,
                                              new_db)
