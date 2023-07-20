@@ -65,7 +65,7 @@ class FileManager:
         return init_time, bytes_per_file, files_per_folder, version_byte, fstring_size, fstring, dense_fstring, fields
 
     def __init__(self, fstring: str, field_names: tuple, bytes_per_file: int,
-                 files_per_folder: int, init_time: int, filepath: str) -> None:
+                 files_per_folder: int, init_time: int, filepath: str, new_db: bool) -> None:
         self.bytes_per_file = bytes_per_file
         self.db_num = 0
         self.fstring = fstring
@@ -74,13 +74,18 @@ class FileManager:
         self.lines_per_file = (self.bytes_per_file // self.fstring_size) + 1
         self.files_per_folder = files_per_folder
         self.init_time = init_time
+        self.folder_start_time = init_time
+        self.file_start_time = init_time
         self.folders = 0
         self.files = 0
         self.fields = field_names
         self.filepath = filepath
         self.db_map = f"{self.filepath}/db_map.map"
         self.db_info = f"{self.filepath}/db_info.info"
-        self.setup()
+        if new_db:
+            self.setup()
+        else:
+            self.read_setup()
 
     def setup(self):
         """
@@ -91,10 +96,21 @@ class FileManager:
             self.create_new_folder()
             self.create_new_file()
             self.create_db_info()
+            self.write_temp_data_file()
         except FileExistsError:
             raise RuntimeError("database already exists in folder")
         except Exception as e:
             print(f"could not setup databse: {e}")
+
+    def read_setup(self):
+        with open(f"{self.filepath}/temp", "rb") as fd:
+            data = fd.read()
+        folders, files, folder_start_time, file_start_time = struct.unpack("iiii", data)
+        self.folders = folders
+        self.files = files
+        self.folder_start_time = folder_start_time
+        self.file_start_time = file_start_time
+        self.current_map = f"{self.filepath}/{self.folders}/.map"
 
     def create_db_map(self):
         try:
@@ -125,6 +141,13 @@ class FileManager:
                 fd.write(data)
         except Exception as e:
             print(f"failed to create db info: {e}")
+
+    def write_temp_data_file(self):
+        packed_data = struct.pack("iiii", self.folders, self.files,
+                                  int(self.folder_start_time),
+                                  int(self.file_start_time))
+        with open(f"{self.filepath}/temp", "wb") as fd:
+            fd.write(packed_data)
 
     def write_file(self, bytes_data: bytes) -> bool:
         '''
@@ -174,6 +197,7 @@ class FileManager:
         stores when a file has started to be used to eventually write to the map
         """
         self.file_start_time = t
+        self.write_temp_data_file()
 
     def write_to_folder_map(self, t):
         """
@@ -201,6 +225,7 @@ class FileManager:
         stores start time of file for later use to write to the map file
         """
         self.folder_start_time = time
+        self.write_temp_data_file()
 
     def write_to_db_map(self, t):
         """

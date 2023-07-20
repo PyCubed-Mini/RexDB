@@ -10,7 +10,7 @@ class DbInfoTest(fake_filesystem_unittest.TestCase):
 
     def testBasic(self):
         os.mkdir("sd")
-        fileManager = FileManager("ifcf", ("money", "volume", "letter", "area"), 1024, 100, 90, "sd/")
+        fileManager = FileManager("ifcf", ("money", "volume", "letter", "area"), 1024, 100, 90, "sd/", True)
 
         file = fileManager.db_info
         self.assertEqual(fileManager.info_format, "iiiBi4s4si5si6si6si4s")
@@ -35,7 +35,7 @@ class DbInfoTest(fake_filesystem_unittest.TestCase):
 
     def test_info_read(self):
         fields = ("money", "volume", "letter", "area")
-        fileManager = FileManager("ifcfc", fields, 1024, 100, 900, "")
+        fileManager = FileManager("ifcfc", fields, 1024, 100, 900, "", True)
 
         file = fileManager.db_info
         with open(file, "rb") as fd:
@@ -56,7 +56,7 @@ class DbInfoTest(fake_filesystem_unittest.TestCase):
 
     def test_info_read_large(self):
         fields = ("char", "int", "bool", "ulonglong", "double", "float", "char2", "short", "int2", "float2", "short2")
-        fileManager = FileManager("ci?Qdfchifh", fields, 5096, 50, 19191900, "")
+        fileManager = FileManager("ci?Qdfchifh", fields, 5096, 50, 19191900, "", True)
 
         file = fileManager.db_info
         with open(file, "rb") as fd:
