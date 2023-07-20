@@ -56,3 +56,29 @@ class FileManagerTest(fake_filesystem_unittest.TestCase):
         for i in range(len(time_tests)):
             data = db.get_data_at_time(time_tests[i])
             self.assertEqual(data[1], i * 100)
+
+    def test_querying_more(self):
+        os.mkdir("sd")
+        fields = ("char", "int", "bool", "float")
+        db = RexDB('ci?f', fields, time_method=self.time.gmtime, filepath="sd")
+
+        test_list = [0] * 100
+
+        for i in range(1000):
+            rand = random.random()
+            char = bytes(chr(random.randint(33, 125)), 'utf-8')
+            bool = rand < 0.5
+            if i % 10 == 0:
+                test_list[int(i/10)] = (self.time.gmtime(), char, i, bool, rand)
+            db.log((char, i, bool, rand))
+            self.time.sleep(2)
+
+        db = RexDB(filepath="sd", new_db=False)
+
+        for i in range(100):
+            data = db.get_data_at_time(test_list[i][0])
+
+            self.assertEqual(test_list[i][1], data[1])
+            self.assertEqual(test_list[i][2], data[2])
+            self.assertEqual(test_list[i][3], data[3])
+            self.assertAlmostEqual(test_list[i][4], data[4])
