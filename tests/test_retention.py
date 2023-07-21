@@ -75,13 +75,13 @@ class FileManagerTest(fake_filesystem_unittest.TestCase):
 
         db = RexDB(filepath="sd", new_db=False)
 
-        for i in range(100):
-            data = db.get_data_at_time(test_list[i][0])
+        for entry in test_list:
+            data = db.get_data_at_time(entry[0])
 
-            self.assertEqual(test_list[i][1], data[1])
-            self.assertEqual(test_list[i][2], data[2])
-            self.assertEqual(test_list[i][3], data[3])
-            self.assertAlmostEqual(test_list[i][4], data[4])
+            self.assertEqual(entry[1], data[1])
+            self.assertEqual(entry[2], data[2])
+            self.assertEqual(entry[3], data[3])
+            self.assertAlmostEqual(entry[4], data[4])
 
     def test_logging_then_querying(self):
         os.mkdir("sd")
