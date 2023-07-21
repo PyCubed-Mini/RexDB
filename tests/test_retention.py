@@ -72,8 +72,7 @@ class FileManagerTest(fake_filesystem_unittest.TestCase):
             db.log((char, i, bool, rand))
             self.time.sleep(2)
 
-        db = RexDB(filepath="sd", new_db=False)
-        print(db._file_manager.files)
+        db = RexDB(filepath="sd", time_method=self.time.gmtime, new_db=False)
 
         for entry in test_list:
             data = db.get_data_at_time(entry[0])
