@@ -62,18 +62,18 @@ class FileManagerTest(fake_filesystem_unittest.TestCase):
         fields = ("char", "int", "bool", "float")
         db = RexDB('ci?f', fields, time_method=self.time.gmtime, filepath="sd")
 
-        test_list = [0] * 100
+        test_list = [0] * 1000
 
         for i in range(1000):
             rand = random.random()
             char = bytes(chr(random.randint(33, 125)), 'utf-8')
             bool = rand < 0.5
-            if i % 10 == 0:
-                test_list[int(i/10)] = (self.time.gmtime(), char, i, bool, rand)
+            test_list[i] = (self.time.gmtime(), char, i, bool, rand)
             db.log((char, i, bool, rand))
             self.time.sleep(2)
 
         db = RexDB(filepath="sd", new_db=False)
+        print(db._file_manager.files)
 
         for entry in test_list:
             data = db.get_data_at_time(entry[0])
