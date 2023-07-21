@@ -53,11 +53,12 @@ Each folder has a special file called a map, this map stores the start and end t
 - `new_db`
   - `bool`
   - If the database should be a new instance of a database or if it should attempt to find an existing database in the current directory and continue the existing database
-  - If `new_db` is true, `fstring`, `field_names`, `bytes_per_file`, and `files_per_folder` will all be overwritten with what is found in the existing database at the filepath given. 
+  - If `new_db` is false, the fields `fstring`, `field_names`, `bytes_per_file`, and `files_per_folder` will all be overwritten with what is found in the existing database at the filepath given. 
+  - If no existing database is found an `RuntimeError` will be raised.
 
 <u>functionality</u>
 
-The \_\_init\_\_ function will initialize an empty database that stores data specified by the given string format. Data will also be kept track of based on the field names that you specify. 
+If new_db is `True` The \_\_init\_\_ function will initialize an empty database that stores data specified by the given string format. Data will also be kept track of based on the field names that you specify. Otherwise, this function will attempt to read from the existing database in the directory and continue that databases logs. If the database is unable to be initialized a `RuntimeError` will be raised. 
 
 ### **log**
 

@@ -101,6 +101,7 @@ class FileManager:
             raise RuntimeError("database already exists in folder")
         except Exception as e:
             print(f"could not setup databse: {e}")
+            raise RuntimeError("no database was initialized")
 
     def read_setup(self):
         try:
@@ -114,6 +115,7 @@ class FileManager:
             self.current_map = f"{self.filepath}/{self.folders}/.map"
         except Exception as e:
             print(f"could not get existing database: {e}")
+            raise RuntimeError("no database was initialized")
 
     def create_db_map(self):
         try:
