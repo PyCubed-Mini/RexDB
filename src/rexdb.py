@@ -129,13 +129,11 @@ class RexDB:
 
         return entries
 
-    def get_data_at_field_threshold(self,
-                                    field: str,
-                                    threshold,
-                                    goal,
-                                    cmp_fn=int_cmp,
-                                    start_time=None,
-                                    end_time=None):
+    def get_field_filtered(self,
+                           field: str,
+                           filter_fn,
+                           start_time=None,
+                           end_time=None):
         """
         string * 'a * int set * ('a * 'a -> ORDER) * struct_time * struct_time -> list
 
@@ -194,10 +192,11 @@ class RexDB:
                 with open(filepath, "rb") as file:
                     for _ in range(self._file_manager.lines_per_file):
                         raw_data = file.read(self._packer.line_size)
-                        data = self._packer.unpack(raw_data)
-                        # compare entry and threshold and see if they match the goal
-                        if (cmp_fn(data[field_index], threshold) in goal):
-                            entries.append(data)
+                        if len(raw_data) == self._packer.line_size:
+                            data = self._packer.unpack(raw_data)
+                            # use filter function
+                            if filter_fn(data[field_index]):
+                                entries.append(data)
             except Exception as e:
                 print(f"could not search file: {e}")
 
