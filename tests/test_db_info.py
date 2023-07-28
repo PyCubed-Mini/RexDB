@@ -13,14 +13,14 @@ class DbInfoTest(fake_filesystem_unittest.TestCase):
         fileManager = FileManager("ifcf", ("money", "volume", "letter", "area"), 1024, 100, 90, "sd/", True)
 
         file = fileManager.db_info
-        self.assertEqual(fileManager.info_format, "iiiBi4s4si5si6si6si4s")
+        self.assertEqual(fileManager.info_format, "Biiii4s4si5si6si6si4s")
 
         with open(file, "rb") as fd:
             info = struct.unpack(fileManager.info_format, fd.read())
-            self.assertEqual(info[0], 90)
-            self.assertEqual(info[1], 1024)
-            self.assertEqual(info[2], 100)
-            self.assertEqual(info[3], 0x00)
+            self.assertEqual(info[0], 0x00)
+            self.assertEqual(info[1], 90)
+            self.assertEqual(info[2], 1024)
+            self.assertEqual(info[3], 100)
             self.assertEqual(info[4], len(fileManager.fstring))
             self.assertEqual(info[5].decode('utf-8'), fileManager.fstring)
             self.assertEqual(info[6].decode('utf-8'), fileManager.dense_fstring)

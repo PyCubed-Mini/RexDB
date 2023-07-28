@@ -33,13 +33,13 @@ class FileManager:
         """
         length = len(data)
         index = 0
+        version_byte = data[index + 3]
+        index += 4
         init_time = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
         index += 4
         bytes_per_file = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
         index += 4
         files_per_folder = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + data[index + 0]
-        index += 4
-        version_byte = data[index + 3]
         index += 4
         fstring_size = (data[index + 3] << 24) + (data[index + 2] << 16) + (data[index + 1] << 8) + (data[index + 0])
         index += 4
@@ -132,14 +132,14 @@ class FileManager:
         for all field names.
         '''
         field_names = self.fields
-        self.info_format = f"iiiBi{len(self.fstring)}s{len(self.fstring)}s"
+        self.info_format = f"Biiii{len(self.fstring)}s{len(self.fstring)}s"
         fields = ()
         for field in field_names:
             fields = fields + (len(field), bytes(field, 'utf-8'))
             self.info_format += f"i{len(field)}s"
 
-        data = struct.pack(self.info_format, self.init_time, self.bytes_per_file, self.files_per_folder,
-                           VERSION_BYTE, len(self.fstring), bytes(self.fstring, 'utf-8'),
+        data = struct.pack(self.info_format, VERSION_BYTE, self.init_time, self.bytes_per_file, self.files_per_folder,
+                           len(self.fstring), bytes(self.fstring, 'utf-8'),
                            bytes(self.dense_fstring, 'utf-8'), *fields)
         try:
             with open(self.db_info, "wb") as fd:
