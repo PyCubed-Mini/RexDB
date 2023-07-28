@@ -146,3 +146,65 @@ class RexDB:
                 print(f"could not search file: {e}")
 
         return entries
+
+    def get_field_filtered(self,
+                           field: str,
+                           filter_fn,
+                           start_time=None,
+                           end_time=None):
+        """
+        string * 'a * int set * ('a * 'a -> ORDER) * struct_time * struct_time -> list
+
+        field
+        - str
+        - is a string and is the name of the field you want to query on.
+
+        filter_fn:
+        - 'a -> bool
+        - The function you want to use to filter your data. Should return a bool that represents
+          if you want to take that entry as part of the returned set.
+
+        the start_time and end_time fields are optional fields to limit your search
+        to a specific time range.
+
+        The complexity of this function if O(n). This function does not benefit from
+        the speed increase that the map files provide.
+        """
+
+        entries = []
+        filepaths = []
+        # get files to search
+        if start_time and end_time:
+            # If start and end times were specified only search files that fall within that range.
+            start = start_time
+            end = end_time
+        elif start_time:
+            # if only start time specified search from start time to now
+            start = start_time
+            end = time.mktime(self._timer_function())
+        else:
+            # if neither are specified search from the database's start to now
+            start = self._init_time
+            end = time.mktime(self._timer_function())
+
+        filepaths = self._file_manager.locations_from_range(start, end)
+        # get the correct field index for comparison
+        for i, f in enumerate(self._field_names):
+            if field.lower() == f.lower():
+                field_index = i
+
+        # access every file
+        for filepath in filepaths:
+            try:
+                with open(filepath, "rb") as file:
+                    for _ in range(self._file_manager.lines_per_file):
+                        raw_data = file.read(self._packer.line_size)
+                        if len(raw_data) == self._packer.line_size:
+                            data = self._packer.unpack(raw_data)
+                            # use filter function
+                            if filter_fn(data[field_index]):
+                                entries.append(data)
+            except Exception as e:
+                print(f"could not search file: {e}")
+
+        return entries
