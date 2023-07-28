@@ -108,7 +108,7 @@ class RexDB:
         """
         tfloat = time.mktime(t)
         filepath = self._file_manager.location_from_time(tfloat)
-        if tfloat < time.mktime(self._init_time):
+        if tfloat < self._init_time:
             raise ValueError("time is before database init time")
         try:
             with open(filepath, "rb") as fd:
@@ -176,15 +176,15 @@ class RexDB:
         # get files to search
         if start_time and end_time:
             # If start and end times were specified only search files that fall within that range.
-            start = time.mktime(start_time)
-            end = time.mktime(end_time)
+            start = start_time
+            end = end_time
         elif start_time:
             # if only start time specified search from start time to now
-            start = time.mktime(start_time)
+            start = start_time
             end = time.mktime(self._timer_function())
         else:
             # if neither are specified search from the database's start to now
-            start = time.mktime(self._init_time)
+            start = self._init_time
             end = time.mktime(self._timer_function())
 
         filepaths = self._file_manager.locations_from_range(start, end)
