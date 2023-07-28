@@ -141,21 +141,10 @@ class RexDB:
         - str
         - is a string and is the name of the field you want to query on.
 
-        Threshold:
-        - 'a
-        - is the value that you want to compare the data to
-
-        goal:
-        - any subset of {-1, 0, 1}
-        - The integers used in this set should be -1, 0, 1.
-        - -1 corresponds to less than, 0 corresponds to equal to, 1 corresponds to
-          greater that. put in your set each operation you would like to include.
-
-        cmp_fn:
-        - 'a * 'a -> (some x in the set {-1, 0, 1})
-        - is an optional field. It is the comparison function you are using
-          to compare your threshold with the data stored in the database. The default
-          is an integer comparison function.
+        filter_fn:
+        - 'a -> bool
+        - The function you want to use to filter your data. Should return a bool that represents
+          if you want to take that entry as part of the returned set.
 
         the start_time and end_time fields are optional fields to limit your search
         to a specific time range.
