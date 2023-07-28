@@ -12,6 +12,7 @@ A very simple Python database with time as the primary method of querying.
     - [**get\_data\_at\_time**](#get_data_at_time)
     - [**get\_data\_at\_range**](#get_data_at_range)
     - [**get\_data\_at\_field\_threshold**](#get_data_at_field_threshold)
+
 ## How it works.
 
 RexDB works in a very straightforward manner. It works through the operating system file structure. The database is stored in a directory called db\_\<number\>, this is so that multiple databases could be stored in the same directory. inside the database folder is another set of folders and within those folders are the files that contain your entries. However, these files are unreadable as they are just structs packed into bytes.
@@ -25,36 +26,41 @@ Each folder has a special file called a map, this map stores the start and end t
 
 - `None -> rexDB`
 
-<u>required arguments</u>
+<u>arguments</u>
 
-- fstring
+- `fstring`
   - `string`
   - the format string for your data
   - if you don't know how packing structs work in Python take a look at Python's documentation [here](https://docs.python.org/3/library/struct.html#format-characters)
-- field_names
+- `field_names`
   - `string tuple`
   - a tuple containing all the names of the fields in your database
   - the order _must_ match your format string
-
-<u>optional arguments</u>
-
-- bytes_per_file
+- `bytes_per_file`
   - `integer`
   - you can use this to specify how many bytes you want per file, if that is a constraint for your application
   - the default is 1KB.
-- files_per_folder
+- `files_per_folder`
   - `integer`
   - you can use this to specify how many files you would like in each folder that the database creates if this is a constraint for your application
   - the default is 50 files per folder (50 KB per folder)
-- time_method
+- `time_method`
   - `None -> time.struct_time`
   - a function that will give the timestamps you would like to use in your database. The default is Python's `time.gmtime()`
   - This function _must return a_ `time.struct_time`. _NOT_ a float containing seconds since epoch.
   - Because of the use of the time.struct\_time datatype, timestamps will only have precision down to the nearest second, if your application requires more precision than that do not use this database.
+- `filepath`
+  - `string`
+  - the directory you want your database to go in
+- `new_db`
+  - `bool`
+  - If the database should be a new instance of a database or if it should attempt to find an existing database in the current directory and continue the existing database
+  - If `new_db` is false, the fields `fstring`, `field_names`, `bytes_per_file`, and `files_per_folder` will all be overwritten with what is found in the existing database at the filepath given. 
+  - If no existing database is found an `RuntimeError` will be raised.
 
 <u>functionality</u>
 
-The \_\_init\_\_ function will initialize an empty database that stores data specified by the given string format. Data will also be kept track of based on the field names that you specify. 
+If new_db is `True` The \_\_init\_\_ function will initialize an empty database that stores data specified by the given string format. Data will also be kept track of based on the field names that you specify. Otherwise, this function will attempt to read from the existing database in the directory and continue that databases logs. If the database is unable to be initialized a `RuntimeError` will be raised. 
 
 ### **log**
 
